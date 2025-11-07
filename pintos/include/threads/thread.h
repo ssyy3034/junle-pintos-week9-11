@@ -94,6 +94,7 @@ struct thread {
 
 	/* Shared between thread.c and synch.c. */
 	struct list_elem elem;              /* List element. */
+	int wake_time; //r
 
 #ifdef USERPROG
 	/* Owned by userprog/process.c. */
@@ -116,6 +117,9 @@ extern bool thread_mlfqs;
 
 void thread_init (void);
 void thread_start (void);
+
+void thread_sleep(int64_t ticks);
+void thread_awake(int64_t ticks);
 
 void thread_tick (void);
 void thread_print_stats (void);
