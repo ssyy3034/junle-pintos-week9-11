@@ -27,6 +27,7 @@
 /* List of processes in THREAD_READY state, that is, processes
    that are ready to run but not actually running. */
 static struct list ready_list;
+static struct list sleep_list;
 
 /* Idle thread. */
 static struct thread *idle_thread;
@@ -108,6 +109,7 @@ thread_init (void) {
 	/* Init the globla thread context */
 	lock_init (&tid_lock);
 	list_init (&ready_list);
+	list_init (&sleep_list);
 	list_init (&destruction_req);
 
 	/* Set up a thread structure for the running thread. */
@@ -210,6 +212,8 @@ thread_create (const char *name, int priority,
 	return tid;
 }
 
+
+
 /* Puts the current thread to sleep.  It will not be scheduled
    again until awoken by thread_unblock().
 
@@ -307,7 +311,36 @@ thread_yield (void) {
 	do_schedule (THREAD_READY);
 	intr_set_level (old_level);
 }
+void thread_sleep(int64_t tick){
+	struct thread *cur;
+	enum intr_level old_level;
+	old_level = intr_disable();
 
+	cur = thread_current();
+	ASSERT (cur != idle_thread);
+	cur->wake_time = tick;
+	list_push_back(&sleep_list,&cur->elem);
+	thread_block();
+
+	intr_set_level(old_level);
+}
+
+void
+thread_awake(int64_t ticks){
+	struct list_elem *e = list_begin(&sleep_list);
+	while(e != list_end(&sleep_list)){
+		struct thread *t = list_entry(e,struct thread,elem);
+		if(t->wake_time >= ticks){
+			e= list_remove(e);
+			thread_unblock(t);
+		}
+		else{
+			e = e->next;
+		}
+	}
+
+
+}
 /* Sets the current thread's priority to NEW_PRIORITY. */
 void
 thread_set_priority (int new_priority) {
