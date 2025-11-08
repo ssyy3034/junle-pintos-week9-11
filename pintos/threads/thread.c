@@ -306,21 +306,16 @@ thread_exit (void) {
    may be scheduled again immediately at the scheduler's whim. */
 void
 thread_yield (void) {
-	struct thread *curr = thread_current ();
-	enum intr_level old_level;
+  struct thread *cur = thread_current ();
+  enum intr_level old_level = intr_disable ();
 
-	ASSERT (!intr_context ());
+  if (cur != idle_thread)
+    list_insert_ordered(&ready_list, &cur->elem, thread_priority_less, NULL);
 
-	old_level = intr_disable ();
-	if (curr != idle_thread){
-		if(!list_empty(&ready_list)){
-		struct thread *highest = list_entry((list_front(&ready_list)),struct thread,elem);
-	}
-	}
-		list_insert_ordered(&ready_list,&curr->elem,thread_priority_less,NULL);
-	do_schedule (THREAD_READY);
-	intr_set_level (old_level);
+  do_schedule (THREAD_READY);
+  intr_set_level (old_level);
 }
+
 void thread_sleep(int64_t tick){
 	struct thread *cur;
 	enum intr_level old_level;
@@ -354,7 +349,15 @@ thread_awake(int64_t ticks){
 /* Sets the current thread's priority to NEW_PRIORITY. */
 void
 thread_set_priority (int new_priority) {
-	thread_current ()->priority = new_priority;
+	struct thread *cur = thread_current ();
+	int old_priority = cur->priority;
+	enum intr_level old_lvl = intr_disable();
+	struct thread *highest = list_entry(list_front(&ready_list),struct thread,elem);
+	cur->priority = new_priority;
+	if(cur->priority < highest->priority){
+		thread_yield();
+	}
+	intr_set_level(old_lvl);
 }
 
 /* Returns the current thread's priority. */
