@@ -244,14 +244,14 @@ thread_block (void) {
    update other data. */
 void
 thread_unblock (struct thread *t) {
-	enum intr_level old_level;
+	enum intr_level old_level = intr_disable ();
 
 	ASSERT (is_thread (t));
-
-	old_level = intr_disable ();
 	ASSERT (t->status == THREAD_BLOCKED);
+	
 	list_insert_ordered(&ready_list,&t->elem,thread_priority_less,NULL);
 	t->status = THREAD_READY;
+
 	intr_set_level (old_level);
 }
 
@@ -351,9 +351,10 @@ void thread_awake(int64_t ticks) {
 /* Sets the current thread's priority to NEW_PRIORITY. */
 void
 thread_set_priority (int new_priority) {
+	enum intr_level old_lvl = intr_disable();
 	struct thread *cur = thread_current ();
 	int old_priority = cur->priority;
-	enum intr_level old_lvl = intr_disable();
+	
 	struct thread *highest = list_entry(list_front(&ready_list),struct thread,elem);
 	cur->priority = new_priority;
 	if(cur->priority < highest->priority){
