@@ -29,6 +29,8 @@ static bool too_many_loops (unsigned loops);
 static void busy_wait (int64_t loops);
 static void real_time_sleep (int64_t num, int32_t denom);
 
+static struct list sleep_list; /* sleep스레드들 관리 리스트 */
+
 /* Sets up the 8254 Programmable Interval Timer (PIT) to
    interrupt PIT_FREQ times per second, and registers the
    corresponding interrupt. */
@@ -43,6 +45,7 @@ timer_init (void) {
 	outb (0x40, count >> 8);
 
 	intr_register_ext (0x20, timer_interrupt, "8254 Timer");
+	list_init(&sleep_list); //# 초기화
 }
 
 /* Calibrates loops_per_tick, used to implement brief delays. */
@@ -89,29 +92,48 @@ timer_elapsed (int64_t then) {
 
 /* Suspends execution for approximately TICKS timer ticks. */
 void
-timer_sleep (int64_t ticks) {
-	int64_t start = timer_ticks ();
+timer_sleep (int64_t ticks) { // 호출한 스레드의 실행을 지정된 틱 수 동안 재움 (기본: 1초 100tick)
+	//수정 방향: idle-state 아니라면, 
+	//정확히 x tick 뒤에 깨울필요없이 지정된 시간 지나면 ready queue에 다시 넣어주기만하면됨
+	// : 깨울시간 계산, sleep리스트에 등록, 스레드 Block
+	
+	// 기존: while->계속 체크
+	// int64_t start = timer_ticks ();
+	// ASSERT (intr_get_level () == INTR_ON);
+	// while (timer_elapsed (start) < ticks)
+	// 	thread_yield ();
+	if (ticks <= 0)
+		return;
+	//깨울 시간 계산
+	int64_t wake_tick = timer_ticks() + ticks;
+	//현재 스레드의 wakeup_tick에 기록
+	enum intr_level old_level = intr_disable(); //인터럽트 비활
+	
+	struct thread *cur = thread_current();//cur_thread
+	cur->wakeup_tick = wake_tick;
 
-	ASSERT (intr_get_level () == INTR_ON);
-	while (timer_elapsed (start) < ticks)
-		thread_yield ();
+	/* wakeup_tick 기준으로 정렬되게 넣어두면 나중에 처리 편하다고함.. */
+    list_insert_ordered(&sleep_list, &cur->elem, less_wakeup, NULL);
+	
+	thread_block(); //현재 스레드 잠재움
+	intr_set_level(old_level); //기억해둔 이전 상태로 다시 복구
 }
 
 /* Suspends execution for approximately MS milliseconds. */
 void
-timer_msleep (int64_t ms) {
+timer_msleep (int64_t ms) { // 밀리초 단위 sleep
 	real_time_sleep (ms, 1000);
 }
 
 /* Suspends execution for approximately US microseconds. */
 void
-timer_usleep (int64_t us) {
+timer_usleep (int64_t us) { // 마이크로초 단위 sleep
 	real_time_sleep (us, 1000 * 1000);
 }
 
 /* Suspends execution for approximately NS nanoseconds. */
 void
-timer_nsleep (int64_t ns) {
+timer_nsleep (int64_t ns) { // 나노초 단위 sleep
 	real_time_sleep (ns, 1000 * 1000 * 1000);
 }
 
@@ -123,9 +145,21 @@ timer_print_stats (void) {
 
 /* Timer interrupt handler. */
 static void
-timer_interrupt (struct intr_frame *args UNUSED) {
+timer_interrupt (struct intr_frame *args UNUSED) { // 매 tick마다 호출되는 인터럽트 핸들러
+	// : 현재 tick기준 깨울 스레드 찾아 unblock
 	ticks++;
 	thread_tick ();
+	// sleep_list맨앞 확인 -> 그 스레드 wakeup)tick<=nowtick이면 리스트제거+unblock+ready(), 조건만족하는애없을떄까지반복
+	while (!list_empty(&sleep_list)){
+		struct thread *t = list_entry(list_front(&sleep_list), struct thread, elem);
+
+		if (t->wakeup_tick <= ticks){
+			list_pop_front(&sleep_list);
+			thread_unblock(t);
+		} else{
+			break; //아직 꺨 시간 안 된 스레드가 맨 앞-> 그 뒤도 전부 아직
+		}
+	}
 }
 
 /* Returns true if LOOPS iterations waits for more than one timer

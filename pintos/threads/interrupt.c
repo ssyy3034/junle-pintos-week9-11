@@ -148,7 +148,7 @@ intr_enable (void) {
 
 /* Disables interrupts and returns the previous interrupt status. */
 enum intr_level
-intr_disable (void) {
+intr_disable (void) { //: 이전 인터럽트 상태 반환, cpu 인터럽트 꺼버림
 	enum intr_level old_level = intr_get_level ();
 
 	/* Disable interrupts by clearing the interrupt flag.

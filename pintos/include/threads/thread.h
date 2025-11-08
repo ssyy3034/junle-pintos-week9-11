@@ -85,7 +85,9 @@ typedef int tid_t;
  * only because they are mutually exclusive: only a thread in the
  * ready state is on the run queue, whereas only a thread in the
  * blocked state is on a semaphore wait list. */
-struct thread {
+struct thread { //##
+	//# 추가
+	int64_t wakeup_tick; //해당 스레드 깨워야하는 시간 (tick기준)
 	/* Owned by thread.c. */
 	tid_t tid;                          /* Thread identifier. */
 	enum thread_status status;          /* Thread state. */
@@ -108,6 +110,15 @@ struct thread {
 	struct intr_frame tf;               /* Information for switching */
 	unsigned magic;                     /* Detects stack overflow. */
 };
+/* wakeup_tick 오름차순 정렬 */
+static bool
+less_wakeup (const struct list_elem *a,
+             const struct list_elem *b,
+             void *aux UNUSED) {
+    const struct thread *ta = list_entry(a, struct thread, elem);
+    const struct thread *tb = list_entry(b, struct thread, elem);
+    return ta->wakeup_tick < tb->wakeup_tick;
+}
 
 /* If false (default), use round-robin scheduler.
    If true, use multi-level feedback queue scheduler.
