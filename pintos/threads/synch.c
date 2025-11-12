@@ -94,7 +94,7 @@ sema_try_down (struct semaphore *sema) {
 	else
 		success = false;
 	intr_set_level (old_level);
-
+   
 	return success;
 }
 
@@ -187,7 +187,6 @@ lock_acquire (struct lock *lock) {
 	ASSERT (lock != NULL);
 	ASSERT (!intr_context ());
 	ASSERT (!lock_held_by_current_thread (lock));
-
 	sema_down (&lock->semaphore);
 	lock->holder = thread_current ();
 }
@@ -323,8 +322,8 @@ cond_signal (struct condition *cond, struct lock *lock UNUSED) {
 
   if (!list_empty(&cond->waiters)) {
     list_sort(&cond->waiters,cond_priority_compare,NULL);
-    struct semaphore_elem *se =
-      list_entry(list_pop_front(&cond->waiters), struct semaphore_elem, elem);
+    struct semaphore_elem *se = 
+      list_entry(list_pop_front(&cond->waiters), struct semaphore_elem, elem);   
     sema_up(&se->semaphore);
   }
 }
