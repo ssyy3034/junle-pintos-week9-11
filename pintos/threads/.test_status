@@ -4,7 +4,7 @@ priority-donate-lower FAIL
 priority-preempt PASS
 alarm-simultaneous PASS
 priority-donate-chain FAIL
-priority-condvar FAIL
+priority-condvar PASS
 priority-donate-nest FAIL
 alarm-single PASS
 priority-donate-multiple2 FAIL

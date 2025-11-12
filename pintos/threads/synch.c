@@ -42,6 +42,7 @@ more_priority (const struct list_elem *a, //새로 넣을 원소
 	return ta->priority > tb->priority; //True인 자리가 들어갈 자리
 }
 
+
 /* Initializes semaphore SEMA to VALUE.  A semaphore is a
    nonnegative integer along with two atomic operators for
    manipulating it:
@@ -148,11 +149,11 @@ sema_up (struct semaphore *sema) {
 			flag = true;
 		}
 	}
-		
+
 	sema->value++;
 
 	if (flag){
-		thread_yield();
+		thread_yield(); //flag로 안빼두면: yield->우선순위높은스레드 run=> sema->value++나중에돼서 문제생김
 	}
 	intr_set_level (old_level);
 }
@@ -212,7 +213,7 @@ lock_init (struct lock *lock) {
 	ASSERT (lock != NULL);
 
 	lock->holder = NULL;
-	sema_init (&lock->semaphore, 1);
+	sema_init (&lock->semaphore, 1); //락은 세마포어 무조건 <=1
 }
 
 /* Acquires LOCK, sleeping until it becomes available if
@@ -220,17 +221,16 @@ lock_init (struct lock *lock) {
    thread.
 
    This function may sleep, so it must not be called within an
-   interrupt handler.  This function may be called with
-   interrupts disabled, but interrupts will be turned back on if
-   we need to sleep. */
-void
-lock_acquire (struct lock *lock) {
+   interrupt handler.  ****This function may be called with interrupts disabled*****, 
+   but interrupts will be turned back on if we need to sleep. */
+void //락 얻기
+lock_acquire (struct lock *lock) { //** intr_disabled상태로 불러야하는 함수임!!
 	ASSERT (lock != NULL);
 	ASSERT (!intr_context ());
 	ASSERT (!lock_held_by_current_thread (lock));
 
 	sema_down (&lock->semaphore);
-	lock->holder = thread_current ();
+	lock->holder = thread_current (); //점유자: 현스레드
 }
 
 /* Tries to acquires LOCK and returns true if successful or false
@@ -283,6 +283,20 @@ struct semaphore_elem {
 	struct semaphore semaphore;         /* This semaphore. */
 };
 
+static bool // cond_waiters > semaphore_elem(=waiter) > semaphore > waiters(=진짜 스레드)
+more_priority_sema (const struct list_elem *a,
+						const struct list_elem *b,
+						void *aux UNUSED){
+	const struct semaphore_elem *sa = list_entry(a, struct semaphore_elem, elem);
+	const struct semaphore_elem *sb = list_entry(b, struct semaphore_elem, elem);
+	//#define list_entry(LIST_ELEM, STRUCT, MEMBER) 
+	const struct thread *ta = list_entry(list_front(&sa->semaphore.waiters), struct thread, elem);
+	const struct thread *tb = list_entry(list_front(&sb->semaphore.waiters), struct thread, elem);
+
+	return ta->priority > tb->priority;
+}
+
+
 /* Initializes condition variable COND.  A condition variable
    allows one piece of code to signal a condition and cooperating
    code to receive the signal and act upon it. */
@@ -314,7 +328,7 @@ cond_init (struct condition *cond) {
    interrupts disabled, but interrupts will be turned back on if
    we need to sleep. */
 void
-cond_wait (struct condition *cond, struct lock *lock) {
+cond_wait (struct condition *cond, struct lock *lock) { //자동 락해제+ 시그널받기 기다리는 상태 만들기
 	struct semaphore_elem waiter;
 
 	ASSERT (cond != NULL);
@@ -322,10 +336,17 @@ cond_wait (struct condition *cond, struct lock *lock) {
 	ASSERT (!intr_context ());
 	ASSERT (lock_held_by_current_thread (lock));
 
-	sema_init (&waiter.semaphore, 0);
-	list_push_back (&cond->waiters, &waiter.elem);
-	lock_release (lock);
-	sema_down (&waiter.semaphore);
+	sema_init (&waiter.semaphore, 0); //내 전용 알람(깨우기용)
+	/* 기존: list_push_back (&cond->waiters, &waiter.elem); */
+	// cond_waiter목록에 자기자신 등록
+	//list_insert_ordered(&cond->waiters, &waiter.elem, more_priority, NULL);//이렇게하면정렬안됨
+	//그냥 기존대로하고 뽑을때 차라리 바꾸자
+	list_push_back(&cond->waiters, &waiter.elem);
+	
+	//락 풀고 잠들기
+	lock_release (lock); //공유 락 풀기
+	sema_down (&waiter.semaphore); //wait-list로 들어가기
+	//깨어나면 다시 락 잡고 리턴
 	lock_acquire (lock);
 }
 
@@ -336,16 +357,20 @@ cond_wait (struct condition *cond, struct lock *lock) {
    An interrupt handler cannot acquire a lock, so it does not
    make sense to try to signal a condition variable within an
    interrupt handler. */
-void
+void //상태만족됐다! -- cond->waiter중 하나 깨워 락 주기 (단, 인터럽트핸들러 안에서 쓰지 말기)
 cond_signal (struct condition *cond, struct lock *lock UNUSED) {
 	ASSERT (cond != NULL);
 	ASSERT (lock != NULL);
 	ASSERT (!intr_context ());
 	ASSERT (lock_held_by_current_thread (lock));
 
-	if (!list_empty (&cond->waiters))
+	if (!list_empty (&cond->waiters)){
+		//이미 여기서 다 모여있을거라 여기서 sort해서 각 waiter 대기열에서 비교가능
+		list_sort(&cond->waiters, more_priority_sema, NULL);// ###
+
 		sema_up (&list_entry (list_pop_front (&cond->waiters),
 					struct semaphore_elem, elem)->semaphore);
+	}
 }
 
 /* Wakes up all threads, if any, waiting on COND (protected by
