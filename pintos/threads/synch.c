@@ -110,6 +110,7 @@ void sema_up(struct semaphore *sema) {
       struct thread *t = list_entry(list_pop_front(&sema->waiters), struct thread, elem);
       thread_unblock(t);
 }
+
 intr_set_level(old);
 maybe_preempt();
 
@@ -184,11 +185,23 @@ lock_init (struct lock *lock) {
    we need to sleep. */
 void
 lock_acquire (struct lock *lock) {
-	ASSERT (lock != NULL);
-	ASSERT (!intr_context ());
-	ASSERT (!lock_held_by_current_thread (lock));
-	sema_down (&lock->semaphore);
-	lock->holder = thread_current ();
+   /* ... ASSERTs ... */
+
+   // ✅ 수정: 기부는 "더 높을 때만" 수행합니다.
+   if (lock->holder != NULL && lock->holder->priority < thread_current()->priority) {
+        
+        // 1. 홀더의 우선순위를 갱신합니다.
+        lock->holder->priority = thread_current()->priority;
+        
+        // 2. (참고: donate-chain을 위해서는
+        //    여기서 홀더가 기다리는 다른 락으로 기부를 "전파"하는
+        //    재귀적(recursive) 갱신 로직이 추가로 필요합니다.)
+   }
+
+   sema_down (&lock->semaphore);
+   
+   lock->holder = thread_current ();
+   list_push_back(&thread_current()->lock_held_list, &lock->lock_held); // (오타 수정 가정)
 }
 
 /* Tries to acquires LOCK and returns true if successful or false
@@ -216,13 +229,53 @@ lock_try_acquire (struct lock *lock) {
    An interrupt handler cannot acquire a lock, so it does not
    make sense to try to release a lock within an interrupt
    handler. */
-void
-lock_release (struct lock *lock) {
-	ASSERT (lock != NULL);
-	ASSERT (lock_held_by_current_thread (lock));
+/* 이 함수는 thread.c 또는 synch.c에 있어야 합니다. */
+/* (재귀가 아닌 반복문 버전) */
+void thread_update_priority(struct thread *t) {
+    enum intr_level old_level = intr_disable(); 
 
-	lock->holder = NULL;
-	sema_up (&lock->semaphore);
+    // 1. 자신의 기본 우선순위로 시작
+    int max_priority = t->original_priority;
+
+    // 2. 내가 보유한 *모든 락*을 순회 (반복문 사용)
+    if (!list_empty(&t->lock_held_list)) {
+        struct list_elem *e;
+
+        for (e = list_begin(&t->lock_held_list); e != list_end(&t->lock_held_list); e = list_next(e)) {
+            
+            // (struct lock에 'lock_elem' 멤버가 있다고 가정)
+            struct lock *l = list_entry(e, struct lock, lock_held); 
+            
+            // 3. 이 락(l)을 기다리는(waiters) 스레드들 중 최고 우선순위를 찾음
+            if (!list_empty(&l->semaphore.waiters)) {
+                
+                // waiters 리스트는 정렬되어 있으므로 맨 앞만 확인
+                struct thread *waiter = list_entry(list_front(&l->semaphore.waiters), struct thread, elem);
+                
+                if (waiter->priority > max_priority) {
+                    max_priority = waiter->priority;
+                }
+            }
+        }
+    }
+
+    // 4. 계산된 최고 우선순위를 나의 유효 우선순위로 설정
+    t->priority = max_priority;
+    
+    intr_set_level(old_level);
+}
+void lock_release(struct lock *lock) {
+    struct thread *t = thread_current();
+
+    /* 1. (가장 중요) 보유 락 리스트(t->held_locks)에서 *먼저* 제거합니다. */
+    list_remove(&lock->lock_held);
+
+    /* 2. 락 제거 후, 우선순위를 *재계산*합니다. */
+    thread_update_priority(t); 
+
+    /* 3. 락 홀더를 비우고 대기 스레드를 깨웁니다. */
+    lock->holder = NULL;
+    sema_up(&lock->semaphore); 
 }
 
 /* Returns true if the current thread holds LOCK, false
