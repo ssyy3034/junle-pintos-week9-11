@@ -1,0 +1,30 @@
+* [33m792a7aa[m[33m ([m[1;36mHEAD -> [m[1;32mdongha[m[33m)[m feat:add formater
+* [33m753276e[m feat:add formater
+[31m|[m *   [33mb63b8a6[m[33m ([m[1;31morigin/main[m[33m)[m Merge pull request #2 from ssyy3034/dongha
+[31m|[m [32m|[m[33m\[m  
+[31m|[m [32m|[m * [33meb2f748[m Merge branch 'main' into dongha
+[31m|[m [32m|[m[31m/[m[32m|[m 
+[31m|[m[31m/[m[32m|[m[32m/[m  
+[31m|[m *   [33m9db299a[m Merge pull request #1 from ssyy3034/fix
+[31m|[m [36m|[m[1;31m\[m  
+[31m|[m [36m|[m * [33m762319c[m[33m ([m[1;31morigin/fix[m[33m)[m dongha:fix test complete
+[31m|[m [36m|[m[36m/[m  
+* [36m|[m [33m242b482[m[33m ([m[1;31morigin/dongha[m[33m)[m feat:donate complete
+* [36m|[m [33m1ce30f5[m feat:make donate(nest,chain X)
+* [36m|[m [33m4efc431[m feat:make donate(nest,chain X)
+* [36m|[m [33meb6f8cd[m fix
+* [36m|[m [33me904f5e[m fix:add sort to cond_var function
+* [36m|[m [33m3d1a122[m fix:add sort to cond_var function
+* [36m|[m [33m40a5886[m feat:priority change fix - intr -> preempt
+* [36m|[m [33m79a48ac[m fix:intr sequence
+* [36m|[m [33m2aa7b57[m fix:unblock,complete set_priority
+* [36m|[m [33m85a9ced[m fix:yield logic
+* [36m|[m [33m061522e[m feat:unblock,yield insert_ordered by priority
+* [36m|[m [33m7602239[m feat:thread_priority_less
+* [36m|[m [33m1833f17[m dongha:fix launch.json
+* [36m|[m [33m96e5de0[m dongha:add select_test.sh
+* [36m|[m [33ma5e6747[m dongha:fix timer.c
+* [36m|[m [33me971d15[m dongha:fix threads.h
+* [36m|[m [33m722948e[m dongha:fix threads.c
+[36m|[m[36m/[m  
+* [33m5321f4b[m[33m ([m[1;32mshow[m[33m, [m[1;32mmain[m[33m)[m init
