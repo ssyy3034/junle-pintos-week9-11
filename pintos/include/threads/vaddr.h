@@ -51,9 +51,9 @@
 /* Returns physical address at which kernel virtual address VADDR
  * is mapped. */
 #define vtop(vaddr)                                                                                                    \
-  ({                                                                                                                   \
-    ASSERT(is_kernel_vaddr(vaddr));                                                                                    \
-    ((uint64_t)(vaddr) - (uint64_t)KERN_BASE);                                                                         \
-  })
+    ({                                                                                                                 \
+        ASSERT(is_kernel_vaddr(vaddr));                                                                                \
+        ((uint64_t)(vaddr) - (uint64_t)KERN_BASE);                                                                     \
+    })
 
 #endif /* threads/vaddr.h */

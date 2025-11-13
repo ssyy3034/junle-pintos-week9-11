@@ -7,5 +7,5 @@
 #include "tests/main.h"
 
 void test_main(void) {
-  msg("create(\"quux.dat\"): %d", create(copy_string_across_boundary("quux.dat"), 0));
+    msg("create(\"quux.dat\"): %d", create(copy_string_across_boundary("quux.dat"), 0));
 }

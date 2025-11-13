@@ -8,6 +8,6 @@
 #include "devices/timer.h"
 
 void test_alarm_zero(void) {
-  timer_sleep(0);
-  pass();
+    timer_sleep(0);
+    pass();
 }

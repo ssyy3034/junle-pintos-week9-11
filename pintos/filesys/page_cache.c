@@ -17,13 +17,13 @@ tid_t page_cache_workerd;
 
 /* The initializer of file vm */
 void pagecache_init(void) {
-  /* TODO: Create a worker daemon for page cache with page_cache_kworkerd */
+    /* TODO: Create a worker daemon for page cache with page_cache_kworkerd */
 }
 
 /* Initialize the page cache */
 bool page_cache_initializer(struct page *page, enum vm_type type, void *kva) {
-  /* Set up the handler */
-  page->operations = &page_cache_op;
+    /* Set up the handler */
+    page->operations = &page_cache_op;
 }
 
 /* Utilze the Swap in mechanism to implement readhead */

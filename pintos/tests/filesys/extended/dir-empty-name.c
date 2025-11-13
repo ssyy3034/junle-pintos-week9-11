@@ -6,5 +6,5 @@
 #include "tests/main.h"
 
 void test_main(void) {
-  CHECK(!mkdir(""), "mkdir \"\" (must return false)");
+    CHECK(!mkdir(""), "mkdir \"\" (must return false)");
 }

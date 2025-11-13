@@ -5,6 +5,6 @@
 #include "tests/main.h"
 
 void test_main(void) {
-  msg("I'm your father");
-  exec("child-args childarg");
+    msg("I'm your father");
+    exec("child-args childarg");
 }
