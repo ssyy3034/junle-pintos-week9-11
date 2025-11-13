@@ -1,0 +1,51 @@
+# .clang-format 파일
+
+# 기본 스타일은 LLVM을 따름
+BasedOnStyle: LLVM
+
+# ----------------------------------------------------
+# [수정] Pintos 스타일 (2칸 들여쓰기) 반영
+# ----------------------------------------------------
+
+# 규칙 5: 들여쓰기: 2칸 (Pintos 스타일)
+IndentWidth: 4     # [변경] 4 -> 2 (들여쓰기 너비를 2칸으로)
+TabWidth: 4        # [변경] 4 -> 2 (일관성을 위해 탭 너비도 2칸으로)
+UseTab: Never      # 스페이스 대신 실제 탭 문자를 사용하지 않음 (Pintos 권장)
+
+# 규칙 6, 7: 중괄호 스타일
+# hello() { ... } 처럼 함수 선언 줄에 중괄호 붙이기
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: false
+  AfterControlStatement: false
+  AfterCaseLabel: false
+  AfterEnum: false
+  AfterStruct: false
+  AfterUnion: false
+  BeforeElse: false
+  BeforeCatch: false
+  BeforeWhile: false
+
+# 규칙 8: 포인터: 변수명 옆에 * 붙이기 (int *hello)
+PointerAlignment: Right
+
+# ----------------------------------------------------
+# 기타 기존 설정 (유지)
+# ----------------------------------------------------
+ColumnLimit: 120
+SpaceBeforeParens: ControlStatements
+SpacesInParentheses: false
+SpaceBeforeAssignmentOperators: true
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
+AllowShortEnumsOnASingleLine: false
+IndentCaseLabels: false
+IndentGotoLabels: true
+IndentPPDirectives: None
+BreakBeforeBinaryOperators: None
+MaxEmptyLinesToKeep: 1
+SortIncludes: false
+AlwaysBreakAfterReturnType: None
+AlwaysBreakBeforeReturnType: None

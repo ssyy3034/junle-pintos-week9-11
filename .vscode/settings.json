@@ -1,4 +1,7 @@
 {
+    // ------------------------------------
+    // 1. 사용자님의 기존 설정 (파일 연관)
+    // ------------------------------------
     "files.associations": {
         "bit": "c",
         "functional": "c",
@@ -6,5 +9,26 @@
         "random": "c",
         "limits": "c",
         "numeric": "c"
+    },
+
+    // ------------------------------------
+    // 2. 새로 추가할 설정 (자동 포맷팅)
+    // ------------------------------------
+    
+    // C/C++ 파일의 기본 포맷터를 clang-format으로 지정
+    "editor.defaultFormatter": "ms-vscode.cpptools",
+
+    // 파일을 저장할 때마다 자동으로 포맷팅 실행
+    "editor.formatOnSave": true,
+
+    // C 언어 파일에 대해 위 설정을 명시적으로 적용
+    "[c]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools",
+        "editor.formatOnSave": true
+    },
+    // C++ 언어 파일에 대해 위 설정을 명시적으로 적용
+    "[cpp]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools",
+        "editor.formatOnSave": true
     }
 }
