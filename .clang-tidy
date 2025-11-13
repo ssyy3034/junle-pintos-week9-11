@@ -1,0 +1,4 @@
+# .clang-tidy 파일 내용
+Checks: 'clang-diagnostic-*,clang-analyzer-*,bugprone-*,performance-*'
+HeaderFilterRegex: '.*'
+WarningsAsErrors: ''

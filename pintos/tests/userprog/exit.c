@@ -4,6 +4,6 @@
 #include "tests/main.h"
 
 void test_main(void) {
-  exit(57);
-  fail("should have called exit(57)");
+    exit(57);
+    fail("should have called exit(57)");
 }

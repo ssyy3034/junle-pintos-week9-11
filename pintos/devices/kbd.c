@@ -27,20 +27,20 @@ static intr_handler_func keyboard_interrupt;
 
 /* Initializes the keyboard. */
 void kbd_init(void) {
-  intr_register_ext(0x21, keyboard_interrupt, "8042 Keyboard");
+    intr_register_ext(0x21, keyboard_interrupt, "8042 Keyboard");
 }
 
 /* Prints keyboard statistics. */
 void kbd_print_stats(void) {
-  printf("Keyboard: %lld keys pressed\n", key_cnt);
+    printf("Keyboard: %lld keys pressed\n", key_cnt);
 }
 
 /* Maps a set of contiguous scancodes into characters. */
 struct keymap {
-  uint8_t first_scancode; /* First scancode. */
-  const char *chars;      /* chars[0] has scancode first_scancode,
-               chars[1] has scancode first_scancode + 1,
-               and so on to the end of the string. */
+    uint8_t first_scancode; /* First scancode. */
+    const char *chars;      /* chars[0] has scancode first_scancode,
+                 chars[1] has scancode first_scancode + 1,
+                 and so on to the end of the string. */
 };
 
 /* Keys that produce the same characters regardless of whether
@@ -67,81 +67,81 @@ static const struct keymap shifted_keymap[] = {
 static bool map_key(const struct keymap[], unsigned scancode, uint8_t *);
 
 static void keyboard_interrupt(struct intr_frame *args UNUSED) {
-  /* Status of shift keys. */
-  bool shift = left_shift || right_shift;
-  bool alt = left_alt || right_alt;
-  bool ctrl = left_ctrl || right_ctrl;
+    /* Status of shift keys. */
+    bool shift = left_shift || right_shift;
+    bool alt = left_alt || right_alt;
+    bool ctrl = left_ctrl || right_ctrl;
 
-  /* Keyboard scancode. */
-  unsigned code;
+    /* Keyboard scancode. */
+    unsigned code;
 
-  /* False if key pressed, true if key released. */
-  bool release;
+    /* False if key pressed, true if key released. */
+    bool release;
 
-  /* Character that corresponds to `code'. */
-  uint8_t c;
+    /* Character that corresponds to `code'. */
+    uint8_t c;
 
-  /* Read scancode, including second byte if prefix code. */
-  code = inb(DATA_REG);
-  if (code == 0xe0)
-    code = (code << 8) | inb(DATA_REG);
+    /* Read scancode, including second byte if prefix code. */
+    code = inb(DATA_REG);
+    if (code == 0xe0)
+        code = (code << 8) | inb(DATA_REG);
 
-  /* Bit 0x80 distinguishes key press from key release
-     (even if there's a prefix). */
-  release = (code & 0x80) != 0;
-  code &= ~0x80u;
+    /* Bit 0x80 distinguishes key press from key release
+       (even if there's a prefix). */
+    release = (code & 0x80) != 0;
+    code &= ~0x80u;
 
-  /* Interpret key. */
-  if (code == 0x3a) {
-    /* Caps Lock. */
-    if (!release)
-      caps_lock = !caps_lock;
-  } else if (map_key(invariant_keymap, code, &c) || (!shift && map_key(unshifted_keymap, code, &c)) ||
-             (shift && map_key(shifted_keymap, code, &c))) {
-    /* Ordinary character. */
-    if (!release) {
-      /* Handle Ctrl, Shift.
-         Note that Ctrl overrides Shift. */
-      if (ctrl && c >= 0x40 && c < 0x60) {
-        /* A is 0x41, Ctrl+A is 0x01, etc. */
-        c -= 0x40;
-      } else if (shift == caps_lock)
-        c = tolower(c);
+    /* Interpret key. */
+    if (code == 0x3a) {
+        /* Caps Lock. */
+        if (!release)
+            caps_lock = !caps_lock;
+    } else if (map_key(invariant_keymap, code, &c) || (!shift && map_key(unshifted_keymap, code, &c)) ||
+               (shift && map_key(shifted_keymap, code, &c))) {
+        /* Ordinary character. */
+        if (!release) {
+            /* Handle Ctrl, Shift.
+               Note that Ctrl overrides Shift. */
+            if (ctrl && c >= 0x40 && c < 0x60) {
+                /* A is 0x41, Ctrl+A is 0x01, etc. */
+                c -= 0x40;
+            } else if (shift == caps_lock)
+                c = tolower(c);
 
-      /* Handle Alt by setting the high bit.
-         This 0x80 is unrelated to the one used to
-         distinguish key press from key release. */
-      if (alt)
-        c += 0x80;
+            /* Handle Alt by setting the high bit.
+               This 0x80 is unrelated to the one used to
+               distinguish key press from key release. */
+            if (alt)
+                c += 0x80;
 
-      /* Append to keyboard buffer. */
-      if (!input_full()) {
-        key_cnt++;
-        input_putc(c);
-      }
+            /* Append to keyboard buffer. */
+            if (!input_full()) {
+                key_cnt++;
+                input_putc(c);
+            }
+        }
+    } else {
+        /* Maps a keycode into a shift state variable. */
+        struct shift_key {
+            unsigned scancode;
+            bool *state_var;
+        };
+
+        /* Table of shift keys. */
+        static const struct shift_key shift_keys[] = {
+            {0x2a, &left_shift}, {0x36, &right_shift},  {0x38, &left_alt}, {0xe038, &right_alt},
+            {0x1d, &left_ctrl},  {0xe01d, &right_ctrl}, {0, NULL},
+        };
+
+        const struct shift_key *key;
+
+        /* Scan the table. */
+        for (key = shift_keys; key->scancode != 0; key++)
+            if (key->scancode == code) {
+                *key->state_var = !release;
+                break;
+            }
     }
-  } else {
-    /* Maps a keycode into a shift state variable. */
-    struct shift_key {
-      unsigned scancode;
-      bool *state_var;
-    };
-
-    /* Table of shift keys. */
-    static const struct shift_key shift_keys[] = {
-        {0x2a, &left_shift}, {0x36, &right_shift},  {0x38, &left_alt}, {0xe038, &right_alt},
-        {0x1d, &left_ctrl},  {0xe01d, &right_ctrl}, {0, NULL},
-    };
-
-    const struct shift_key *key;
-
-    /* Scan the table. */
-    for (key = shift_keys; key->scancode != 0; key++)
-      if (key->scancode == code) {
-        *key->state_var = !release;
-        break;
-      }
-  }
 }
 
 /* Scans the array of keymaps K for SCANCODE.
@@ -149,11 +149,11 @@ static void keyboard_interrupt(struct intr_frame *args UNUSED) {
    true.
    If not found, returns false and C is ignored. */
 static bool map_key(const struct keymap k[], unsigned scancode, uint8_t *c) {
-  for (; k->first_scancode != 0; k++)
-    if (scancode >= k->first_scancode && scancode < k->first_scancode + strlen(k->chars)) {
-      *c = k->chars[scancode - k->first_scancode];
-      return true;
-    }
+    for (; k->first_scancode != 0; k++)
+        if (scancode >= k->first_scancode && scancode < k->first_scancode + strlen(k->chars)) {
+            *c = k->chars[scancode - k->first_scancode];
+            return true;
+        }
 
-  return false;
+    return false;
 }

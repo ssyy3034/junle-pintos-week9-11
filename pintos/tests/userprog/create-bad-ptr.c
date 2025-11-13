@@ -6,5 +6,5 @@
 #include "tests/main.h"
 
 void test_main(void) {
-  msg("create(0x20101234): %d", create((char *)0x20101234, 0));
+    msg("create(0x20101234): %d", create((char *)0x20101234, 0));
 }

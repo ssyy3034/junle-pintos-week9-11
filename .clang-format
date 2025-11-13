@@ -1,32 +1,42 @@
-# .clang-format 파일 (오류 수정)
 BasedOnStyle: LLVM
-IndentWidth: 2
-TabWidth: 2
+
 UseTab: Never
+IndentWidth: 4
+TabWidth: 4
+
 BreakBeforeBraces: Custom
 BraceWrapping:
-  AfterFunction: false
-  AfterControlStatement: false
   AfterCaseLabel: false
+  AfterClass: false
+  AfterControlStatement: false
   AfterEnum: false
+  AfterFunction: false
+  AfterNamespace: false
+  AfterObjCDeclaration: false
   AfterStruct: false
   AfterUnion: false
-  BeforeElse: false
+
   BeforeCatch: false
+  BeforeElse: false
+  BeforeLambdaBody: false
   BeforeWhile: false
+
 PointerAlignment: Right
 ColumnLimit: 120
 SpaceBeforeParens: ControlStatements
 SpacesInParentheses: false
 SpaceBeforeAssignmentOperators: true
+
 AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
 AllowShortBlocksOnASingleLine: Never
 AllowShortEnumsOnASingleLine: false
+
 IndentCaseLabels: false
 IndentGotoLabels: true
 IndentPPDirectives: None
+
 BreakBeforeBinaryOperators: None
 MaxEmptyLinesToKeep: 1
 SortIncludes: false

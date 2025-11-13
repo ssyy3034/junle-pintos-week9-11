@@ -13,11 +13,11 @@
 #define ACTUAL ((void *)0x10000000)
 
 void test_main(void) {
-  int handle;
-  void *map;
+    int handle;
+    void *map;
 
-  /* Write file via mmap. */
-  CHECK(create("sample.txt", strlen(sample)), "create \"sample.txt\"");
-  CHECK((handle = open("sample.txt")) > 1, "open \"sample.txt\"");
-  CHECK((map = mmap(ACTUAL, 0, 0, handle, 0)) == MAP_FAILED, "try to mmap zero length");
+    /* Write file via mmap. */
+    CHECK(create("sample.txt", strlen(sample)), "create \"sample.txt\"");
+    CHECK((handle = open("sample.txt")) > 1, "open \"sample.txt\"");
+    CHECK((map = mmap(ACTUAL, 0, 0, handle, 0)) == MAP_FAILED, "try to mmap zero length");
 }

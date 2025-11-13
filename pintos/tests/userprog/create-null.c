@@ -5,5 +5,5 @@
 #include "tests/main.h"
 
 void test_main(void) {
-  msg("create(NULL): %d", create(NULL, 0));
+    msg("create(NULL): %d", create(NULL, 0));
 }
