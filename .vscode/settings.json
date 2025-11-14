@@ -1,5 +1,37 @@
 {
-	"files.associations": {
-		"thread.h": "c"
-	}
+    // ------------------------------------
+    // 1. (기존) 파일 연관 설정
+    // ------------------------------------
+    "files.associations": {
+        "bit": "c",
+        "functional": "c",
+        "string_view": "c",
+        "random": "c",
+        "limits": "c",
+        "numeric": "c"
+    },
+
+    // ------------------------------------
+    // 2. (기존) 자동 포맷팅 (clang-format)
+    // ------------------------------------
+    "editor.defaultFormatter": "ms-vscode.cpptools",
+    "editor.formatOnSave": true,
+    "[c]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools",
+        "editor.formatOnSave": true
+    },
+    "[cpp]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools",
+        "editor.formatOnSave": true
+    },
+
+    // ------------------------------------
+    // 3. [신규] 정적 분석 (clang-tidy)
+    // ------------------------------------
+    "C_Cpp.codeAnalysis.enable": true,
+    "C_Cpp.codeAnalysis.runAutomatically": true,
+    "C_Cpp.codeAnalysis.toolPath": "/usr/bin/clang-tidy",
+
+    // [중요] 이 경로는 bear로 생성한 파일 위치에 맞게 설정되어야 합니다.
+    "C_Cpp.codeAnalysis.databaseFilename": "${workspaceFolder}/pintos/userprog/compile_commands.json"
 }
