@@ -122,10 +122,11 @@ outsb (uint16_t port, const void *addr, size_t cnt) {
 			: "cc");
 }
 
-/* Writes the 16-bit DATA to PORT. */
+/* 16비트 크기의 DATA 값을 지정한 PORT 로 쓴다 */
 static inline void
 outw (uint16_t port, uint16_t data) {
-	/* See [IA32-v2b] "OUT". */
+	/* See [IA32-v2b] "OUT". 
+		어셈블리 명령어 "OUT" 을 쓴다 */
 	asm volatile ("outw %0,%w1" : : "a" (data), "d" (port));
 }
 

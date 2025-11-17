@@ -132,7 +132,7 @@ timer_sleep (int64_t ticks) {
 	enum intr_level old_level;
 	
 	
-	ASSERT (intr_get_level () == INTR_ON); // 왜 필요한지 알아보기
+	ASSERT (intr_get_level () == INTR_ON); // 왜 필요한지 알아보기 11.08
 	
 	/*
 	sleep()이 호출 되면?

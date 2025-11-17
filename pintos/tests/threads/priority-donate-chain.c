@@ -69,10 +69,11 @@ test_priority_donate_chain (void)
       lock_pairs[i].first = i < NESTING_DEPTH - 1 ? locks + i: NULL;
       lock_pairs[i].second = locks + i - 1;
 
+      // printf("before donate : %d", thread_get_priority ());
       thread_create (name, thread_priority, donor_thread_func, lock_pairs + i);
       msg ("%s should have priority %d.  Actual priority: %d.",
           thread_name (), thread_priority, thread_get_priority ());
-
+      // printf("after donate : %d", thread_get_priority ());
       snprintf (name, sizeof name, "interloper %d", i);
       thread_create (name, thread_priority - 1, interloper_thread_func, NULL);
     }
@@ -108,6 +109,7 @@ donor_thread_func (void *locks_)
 static void
 interloper_thread_func (void *arg_ UNUSED)
 {
+  // printf("interloper prioriy : %d", thread_get_priority ());
   msg ("%s finished.", thread_name ());
 }
 

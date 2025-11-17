@@ -70,9 +70,11 @@ list_begin (struct list *list) {
 	return list->head.next;
 }
 
-/* Returns the element after ELEM in its list.  If ELEM is the
-   last element in its list, returns the list tail.  Results are
-   undefined if ELEM is itself a list tail. */
+/* ELEM 다음에 오는 리스트의 원소를 반환한다.
+   만약 ELEM이 리스트의 마지막 원소라면,
+   리스트의 tail(꼬리, 끝 지점)을 반환한다.
+   ELEM 자체가 리스트의 tail인 경우에는,
+   어떤 결과가 나올지 정의되어 있지 않다(사용하면 안 됨). */
 struct list_elem *
 list_next (struct list_elem *elem) {
 	ASSERT (is_head (elem) || is_interior (elem));
@@ -453,10 +455,11 @@ list_unique (struct list *list, struct list *duplicates,
 			elem = next;
 }
 
-/* Returns the element in LIST with the largest value according
-   to LESS given auxiliary data AUX.  If there is more than one
-   maximum, returns the one that appears earlier in the list.  If
-   the list is empty, returns its tail. */
+/* LIST 안에서, 비교 함수 LESS와 보조 데이터 AUX 기준으로
+   가장 큰 값을 가지는 element(원소)를 반환한다.
+   만약 최대값을 가지는 원소가 여러 개라면,
+   리스트에서 더 앞에 있는 원소를 반환한다.
+   리스트가 비어 있다면, 그 리스트의 tail(꼬리, 끝 지점)을 반환한다. */
 struct list_elem *
 list_max (struct list *list, list_less_func *less, void *aux) {
 	struct list_elem *max = list_begin (list);
