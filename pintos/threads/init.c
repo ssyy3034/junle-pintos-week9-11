@@ -137,7 +137,7 @@ static void bss_init(void) {
     memset(&_start_bss, 0, &_end_bss - &_start_bss);
 }
 
-/* Populates the page table with the kernel virtual mapping,
+/* Populates the page table with the kernel virtual mapping, 
  * and then sets up the CPU to use the new page directory.
  * Points base_pml4 to the pml4 it creates. */
 static void paging_init(uint64_t mem_end) {

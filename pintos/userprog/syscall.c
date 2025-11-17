@@ -24,7 +24,8 @@ void syscall_handler(struct intr_frame *);
 #define MSR_LSTAR 0xc0000082        /* Long mode SYSCALL target */
 #define MSR_SYSCALL_MASK 0xc0000084 /* Mask for the eflags */
 
-void syscall_init(void) {
+void syscall_init(void)
+{
     write_msr(MSR_STAR, ((uint64_t)SEL_UCSEG - 0x10) << 48 | ((uint64_t)SEL_KCSEG) << 32);
     write_msr(MSR_LSTAR, (uint64_t)syscall_entry);
 
@@ -35,7 +36,17 @@ void syscall_init(void) {
 }
 
 /* The main system call interface */
-void syscall_handler(struct intr_frame *f UNUSED) {
+void syscall_handler(struct intr_frame *f UNUSED)
+{
+    switch (f->R.rax)
+    {
+    case SYS_WRITE:
+
+        break;
+
+    default:
+        break;
+    }
     // TODO: Your implementation goes here.
     printf("system call!\n");
     thread_exit();
@@ -47,7 +58,8 @@ void syscall_handler(struct intr_frame *f UNUSED) {
  * 이 함수를 process.c 또는 syscall.c 상단에 잠시 추가해 보세요.
  * VS Code에 물결무늬 경고가 표시되어야 합니다.
  */
-void test_clang_tidy_warnings(void) {
+void test_clang_tidy_warnings(void)
+{
     int x; // 버그 1: 초기화되지 않은 변수
     int y = 0;
     int *ptr = NULL; // 버그 2: NULL 포인터
@@ -55,7 +67,8 @@ void test_clang_tidy_warnings(void) {
     /* * [물결무늬 1] clang-analyzer-core.uninitialized.UndefReturn
      * 'x'가 초기화되지 않은 상태에서 사용될 수 있다고 경고해야 합니다.
      */
-    if (x > 10) {
+    if (x > 10)
+    {
         y = 5;
     }
 
@@ -68,7 +81,8 @@ void test_clang_tidy_warnings(void) {
     /* * [물결무늬 3] bugprone-assignment-in-if-condition
      * if문 안에서 '==' (비교) 대신 '=' (할당)을 사용했다고 경고해야 합니다.
      */
-    if (y = 5) {
+    if (y = 5)
+    {
         y = 10;
     }
 

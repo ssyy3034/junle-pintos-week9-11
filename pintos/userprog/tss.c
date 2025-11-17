@@ -49,7 +49,8 @@
 struct task_state *tss;
 
 /* Initializes the kernel TSS. */
-void tss_init(void) {
+void tss_init(void)
+{
     /* Our TSS is never used in a call gate or task gate, so only a
      * few fields of it are ever referenced, and those are the only
      * ones we initialize. */
@@ -58,14 +59,16 @@ void tss_init(void) {
 }
 
 /* Returns the kernel TSS. */
-struct task_state *tss_get(void) {
+struct task_state *tss_get(void)
+{
     ASSERT(tss != NULL);
     return tss;
 }
 
 /* Sets the ring 0 stack pointer in the TSS to point to the end
  * of the thread stack. */
-void tss_update(struct thread *next) {
+void tss_update(struct thread *next)
+{
     ASSERT(tss != NULL);
     tss->rsp0 = (uint64_t)next + PGSIZE;
 }

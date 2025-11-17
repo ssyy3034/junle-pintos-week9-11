@@ -8,7 +8,8 @@
 const char *test_name;
 bool quiet = false;
 
-static void vmsg(const char *format, va_list args, const char *suffix) {
+static void vmsg(const char *format, va_list args, const char *suffix)
+{
     /* We go to some trouble to stuff the entire message into a
        single buffer and output it in a single system call, because
        that'll (typically) ensure that it gets sent to the console
@@ -22,7 +23,8 @@ static void vmsg(const char *format, va_list args, const char *suffix) {
     write(STDOUT_FILENO, buf, strlen(buf));
 }
 
-void msg(const char *format, ...) {
+void msg(const char *format, ...)
+{
     va_list args;
 
     if (quiet)
@@ -32,7 +34,8 @@ void msg(const char *format, ...) {
     va_end(args);
 }
 
-void fail(const char *format, ...) {
+void fail(const char *format, ...)
+{
     va_list args;
 
     va_start(args, format);
@@ -42,52 +45,63 @@ void fail(const char *format, ...) {
     exit(1);
 }
 
-static void swap(void *a_, void *b_, size_t size) {
+static void swap(void *a_, void *b_, size_t size)
+{
     uint8_t *a = a_;
     uint8_t *b = b_;
     size_t i;
 
-    for (i = 0; i < size; i++) {
+    for (i = 0; i < size; i++)
+    {
         uint8_t t = a[i];
         a[i] = b[i];
         b[i] = t;
     }
 }
 
-void shuffle(void *buf_, size_t cnt, size_t size) {
+void shuffle(void *buf_, size_t cnt, size_t size)
+{
     char *buf = buf_;
     size_t i;
 
-    for (i = 0; i < cnt; i++) {
+    for (i = 0; i < cnt; i++)
+    {
         size_t j = i + random_ulong() % (cnt - i);
         swap(buf + i * size, buf + j * size, size);
     }
 }
 
-void exec_children(const char *child_name, pid_t pids[], size_t child_cnt) {
+void exec_children(const char *child_name, pid_t pids[], size_t child_cnt)
+{
     size_t i;
 
-    for (i = 0; i < child_cnt; i++) {
+    for (i = 0; i < child_cnt; i++)
+    {
         char cmd_line[128];
         snprintf(cmd_line, sizeof cmd_line, "%s %zu", child_name, i);
-        if ((pids[i] = fork(child_name))) {
+        if ((pids[i] = fork(child_name)))
+        {
             CHECK(pids[i] != PID_ERROR, "exec child %zu of %zu: \"%s\"", i + 1, child_cnt, cmd_line);
-        } else {
+        } else
+        {
             exec(cmd_line);
         }
     }
 }
 
-void wait_children(pid_t pids[], size_t child_cnt) {
+void wait_children(pid_t pids[], size_t child_cnt)
+{
     size_t i;
 
-    for (i = 0; i < child_cnt; i++) {
+    for (i = 0; i < child_cnt; i++)
+    {
         int status = wait(pids[i]);
         CHECK(status == (int)i, "wait for child %zu of %zu returned %d (expected %zu)", i + 1, child_cnt, status, i);
     }
 }
 
-void check_file_handle(int fd, const char *file_name, const void *buf_, size_t size) {
+void check_file_handle(int fd, const char *file_name, const void *buf_, size_t size)
+{
     const char *buf = buf_;
     size_t ofs = 0;
     size_t file_size;
@@ -100,7 +114,8 @@ void check_file_handle(int fd, const char *file_name, const void *buf_, size_t s
         msg("size of %s (%zu) differs from expected (%zu)", file_name, file_size, size);
 
     /* Read the file block-by-block, comparing data as we go. */
-    while (ofs < size) {
+    while (ofs < size)
+    {
         char block[512];
         size_t block_size, ret_val;
 
@@ -123,7 +138,8 @@ void check_file_handle(int fd, const char *file_name, const void *buf_, size_t s
     msg("verified contents of \"%s\"", file_name);
 }
 
-void check_file(const char *file_name, const void *buf, size_t size) {
+void check_file(const char *file_name, const void *buf, size_t size)
+{
     int fd;
 
     CHECK((fd = open(file_name)) > 1, "open \"%s\" for verification", file_name);
@@ -132,7 +148,8 @@ void check_file(const char *file_name, const void *buf, size_t size) {
     close(fd);
 }
 
-void compare_bytes(const void *read_data_, const void *expected_data_, size_t size, size_t ofs, const char *file_name) {
+void compare_bytes(const void *read_data_, const void *expected_data_, size_t size, size_t ofs, const char *file_name)
+{
     const uint8_t *read_data = read_data_;
     const uint8_t *expected_data = expected_data_;
     size_t i, j;
@@ -153,7 +170,8 @@ void compare_bytes(const void *read_data_, const void *expected_data_, size_t si
         "from expected.",
         j - i, ofs + i, file_name);
     show_cnt = j - i;
-    if (j - i > 64) {
+    if (j - i > 64)
+    {
         show_cnt = 64;
         msg("Showing first differing %zu bytes.", show_cnt);
     }
