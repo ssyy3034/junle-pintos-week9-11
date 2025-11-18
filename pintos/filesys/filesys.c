@@ -72,11 +72,12 @@ filesys_create (const char *name, off_t initial_size) {
 	return success;
 }
 
-/* Opens the file with the given NAME.
- * Returns the new file if successful or a null pointer
- * otherwise.
- * Fails if no file named NAME exists,
- * or if an internal memory allocation fails. */
+/* 주어진 NAME을 가진 파일을 연다.
+ * 성공하면 새로 연 파일을 반환하고,
+ * 실패하면 null 포인터를 반환한다.
+ * NAME인 파일이 존재하지 않거나,
+ * 내부 메모리 할당에 실패한 경우 동작에 실패한다.
+ */
 struct file *
 filesys_open (const char *name) {
 	struct dir *dir = dir_open_root ();

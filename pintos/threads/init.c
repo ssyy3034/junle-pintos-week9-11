@@ -73,6 +73,21 @@ int main(void)
 	bss_init();
 
 	/* Break command line into arguments and parse options. */
+	/*
+		pintos가 시작할 때 이미 bootLoader에 의해 물리메모리에 명령어가 쪼개어져 들어감
+		"pintos\0-q\0run\0tests/threads/alarm-single\0...."
+		저기서 LOADER_ARG_CNT 와 LOADER_ARGS 값들이 정해져 있다
+
+		-> read_command_line() 에서 하는건 물리메모리에 저장된 저 문자열 배열을
+			argv로 옮겨주는것
+			=> 문자열의 /0 를 문자열 배열의 포인터로 만들어 argv를 저장하는 로직
+		-> parse_option() 에서 하는것
+			1. 저렇게 들어온 argv 인자 중 "=" 이 있는 인자 검사
+				-> 얘들은 한 덩어리로 인식되었을 것이기 때문
+			2. 옵션값들 중 지정한 값 있는지 검사해 플래그 세우기 등
+
+		-> 동작을 끝내고 나면 argv에 저장된건 사용자가 입력한 명령어의 배열
+	*/
 	argv = read_command_line();
 	argv = parse_options(argv);
 
@@ -306,6 +321,7 @@ run_actions(char **argv)
 				PANIC("action `%s' requires %d argument(s)", *argv, a->argc - 1);
 
 		/* Invoke action and advance. */
+		// 특정 명령어 (2일 경우 옆에 온 인자까지) 를 파라미터로 함수 실행
 		a->function(argv);
 		argv += a->argc;
 	}
