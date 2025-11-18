@@ -44,6 +44,10 @@ tid_t process_create_initd(const char *file_name)
 {
     char *fn_copy;
     tid_t tid;
+    char *tmp;
+    char *file_name_r = palloc_get_page(0);
+
+    strlcpy(file_name_r, file_name, PGSIZE);
 
     /* Make a copy of FILE_NAME.
      * Otherwise there's a race between the caller and load(). */
@@ -53,7 +57,7 @@ tid_t process_create_initd(const char *file_name)
     strlcpy(fn_copy, file_name, PGSIZE);
 
     /* Create a new thread to execute FILE_NAME. */
-    tid = thread_create(file_name, PRI_DEFAULT, initd, fn_copy);
+    tid = thread_create(file_name_r, PRI_DEFAULT, initd, fn_copy);
     if (tid == TID_ERROR)
         palloc_free_page(fn_copy);
     return tid;
@@ -203,9 +207,13 @@ int process_exec(void *f_name)
  * does nothing. */
 int process_wait(tid_t child_tid UNUSED)
 {
-    /* XXX: Hint) The pintos exit if process_wait (initd), we recommend you
-     * XXX:       to add infinite loop here before
-     * XXX:       implementing the process_wait. */
+    int wtime = 1500;
+    while (wtime > 0)
+    {
+        wtime--;
+        thread_yield();
+    }
+
     return -1;
 }
 
@@ -213,11 +221,7 @@ int process_wait(tid_t child_tid UNUSED)
 void process_exit(void)
 {
     struct thread *curr = thread_current();
-    /* TODO: Your code goes here.
-     * TODO: Implement process termination message (see
-     * TODO: project2/process_termination.html).
-     * TODO: We recommend you to implement process resource cleanup here. */
-
+    printf("%s: exit(%d)\n", curr->name, curr->exit_status);
     process_cleanup();
 }
 
@@ -437,7 +441,7 @@ static bool load(const char *file_name, struct intr_frame *if_)
         argc++;
     }
 
-    for (int i = argc - 1; i >= 0; i--)
+    for (i = argc - 1; i >= 0; i--)
     {
         size_t arg_len = strlen(argv[i]) + 1;
         if_->rsp -= arg_len;
@@ -452,7 +456,7 @@ static bool load(const char *file_name, struct intr_frame *if_)
 
     STACK_DOWN_UNIT64(if_);
 
-    for (int i = argc - 1; i >= 0; i--)
+    for (i = argc - 1; i >= 0; i--)
     {
         STACK_DOWN_UNIT64(if_);
         memcpy(if_->rsp, &argv[i], 8);
@@ -470,7 +474,6 @@ static bool load(const char *file_name, struct intr_frame *if_)
 done:
     /* We arrive here whether the load is successful or not. */
     file_close(file);
-    hex_dump(if_->rsp, if_->rsp, USER_STACK - (uintptr_t)if_->rsp, true);
     return success;
 }
 
