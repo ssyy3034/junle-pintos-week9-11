@@ -208,6 +208,7 @@ int process_wait(tid_t child_tid UNUSED)
 	/* XXX: Hint) The pintos exit if process_wait (initd), we recommend you
 	 * XXX:       to add infinite loop here before
 	 * XXX:       implementing the process_wait. */
+	timer_sleep(10);
 	return -1;
 }
 
@@ -327,7 +328,22 @@ static bool load_segment(struct file *file, off_t ofs, uint8_t *upage,
 /* FILE_NAME으로부터 ELF 실행 파일을 현재 스레드에 적재한다.
  * 실행 파일의 진입 지점(entry point)을 *RIP에 저장하고,
  * 초기 스택 포인터를 *RSP에 저장한다.
- * 성공하면 true를, 그렇지 않으면 false를 반환한다. */
+ * 성공하면 true를, 그렇지 않으면 false를 반환한다.
+ *
+ * Argument Passing
+ *
+ * - file_name : 파일명 + 인자..
+ * 1. 한 문자열로 들어온 file_name 을 쪼갠다
+ * 2. filesys_open() 을 실행할 때는 파일 명만 넘겨야 한다
+ * 3. 함수 진입하면 문자열을 쪼갠 후 0번째 인자를 넘김
+ * 4. 함수 하단에서 유저스택에 넣는 로직
+ * 	- argv의 뒷부분 부터 push
+ *  - 패딩 맞추기(%8 == 0 일때 까지 0 추가)
+ *  - argv[argc] 부터 argv[0] 까지 포인터 push
+ *  - fake return address push
+ *  - %rsi에 argv[0], %rdi에 argc
+ *
+ */
 static bool
 load(const char *file_name, struct intr_frame *if_)
 {
@@ -337,6 +353,33 @@ load(const char *file_name, struct intr_frame *if_)
 	off_t file_ofs;
 	bool success = false;
 	int i;
+	int argc = 0;
+	char *argv[LOADER_ARGS_LEN];
+
+	/*
+		1. file_name 쪼개기
+		before : 파일명 arg1 arg2 ..
+		after : 파일명, arg1, arg2
+
+		argv[] 배열 만들고 거기에 포인터 저장하기
+
+		char *save_ptr;
+		char *name = strtok_r(*argv, "=", &save_ptr);
+
+		for (token = strtok_r (s, " ", &save_ptr); token != NULL;
+		token = strtok_r (NULL, " ", &save_ptr))
+		*/
+	char *token, *save_ptr;
+	for (token = strtok_r(file_name, " ", &save_ptr); token != NULL && argc < LOADER_ARGS_LEN;
+		 token = strtok_r(NULL, " ", &save_ptr))
+	{
+		argv[argc++] = token;
+	}
+	argv[argc] = 0;
+
+	char *argv_addr[argc];
+	// file_name 실제 파일명으로 재정의
+	file_name = argv[0];
 
 	/* Allocate and activate page directory. */
 	t->pml4 = pml4_create();
@@ -427,7 +470,84 @@ load(const char *file_name, struct intr_frame *if_)
 
 	/* TODO: Your code goes here.
 	 * TODO: Implement argument passing (see project2/argument_passing.html). */
+	/*
+	 * 4. 함수 하단에서 유저스택에 넣는 로직
+	 * 	- argv의 뒷부분 부터 push
+	 *  - 패딩 맞추기(%8 == 0 일때 까지 0 추가)
+	 *  - argv[argc] 부터 argv[0] 까지 포인터 push
+	 *  - fake return address push
+	 *  - %rsi에 argv[0], %rdi에 argc
+	 */
 
+	/*
+		argv의 뒷부분부터 스택에 push
+		스택에 쌓는다? -> 유저 스택에 쌓는다
+		-> 스택에 쌓고, '넣은 포인터' 를 기억해야 한다 -> argv_addr[] 필요
+										-> 주소값 쓰지 말고 argv[i] 주소 넘기면 됨
+			- 그 주소의 값에 넣는다? -> memcpy() 사용
+			- 유저스택의 엔트리포인트 : rsp
+			- rsp는 포인터이므로, 그 포인터에 값(argv[i])를 넣는다
+			- rsp를 넣은 값만큼 이동시킨다
+	*/
+	uint8_t *rsp = if_->rsp;
+	// hex_dump(if_->rsp, if_->rsp, USER_STACK - (uintptr_t)if_->rsp, true);
+
+	// argc 만큼 반복 -> 뒤에서부터 삽입
+	// 데이터 옮기고 rsp 내리기
+	for (int i = argc - 1; i >= 0; i--)
+	{
+		// 목적지 - rsp / 소스 - argv[i] / 길이 + 1(널문자 넣으려고)
+		rsp -= strlen(argv[i]) + 1;
+		memcpy(rsp, argv[i], strlen(argv[i]) + 1);
+		argv_addr[i] = rsp;
+	}
+	argv_addr[argc] = 0;
+	/*
+	 - 패딩 맞추기(%8 == 0 일때 까지 0 추가)
+	 -> 현재까지 쌓은 양 : 초기값 - 현재값(스택은 아래로 자라기 때문)
+	 -> 8 - (그 양 % 8) 만큼 아래로 내려가기
+	*/
+	// if (((uint8_t *)USER_STACK - rsp) % 8 != 0)
+	// {
+	// 	rsp -= (8 - ((uint8_t *)USER_STACK - rsp) % 8);
+	// 	memcpy(rsp, 0, 8 - ((uint8_t *)USER_STACK - rsp) % 8);
+	// }
+	if (((uint8_t *)USER_STACK - rsp) % 8 != 0)
+	{
+		for (int i = 0; i < 8 - ((uint8_t *)USER_STACK - rsp) % 8; i++)
+		{
+			rsp -= 1;
+			// *rsp = 0;
+		}
+	}
+	// hex_dump(if_->rsp, USER_STACK - (uintptr_t)if_->rsp, 100, true);
+
+	/*
+	 - argv[argc] 부터 argv[0] 까지 포인터 push
+	*/
+	for (int i = argc; i >= 0; i--)
+	{
+		// 목적지 - rsp / 소스 - argv[i] / 길이
+		rsp -= sizeof(char *);
+		*rsp = argv_addr[i];
+		// memcpy(rsp, argv_addr[i], sizeOf(argv_addr[i]));
+	}
+
+	/*
+	 - %rsi에 argv[0], %rdi에 argc
+	*/
+	if_->R.rsi = rsp;
+	if_->R.rdi = argc;
+
+	/*
+		- fake return address push
+	*/
+	rsp -= sizeof(void *);
+	*rsp = 0;
+
+	if_->rsp = rsp;
+
+	hex_dump(if_->rsp, if_->rsp, USER_STACK - (uintptr_t)if_->rsp, true);
 	success = true;
 
 done:
