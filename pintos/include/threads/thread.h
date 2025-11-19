@@ -100,6 +100,7 @@ struct thread {
     struct list lock_held_list;
     int original_priority;
     struct lock *waiting_lock;
+    struct file **file_descriptor_table; /* FDT의 시작 주소를 가리키는 포인터 */
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
