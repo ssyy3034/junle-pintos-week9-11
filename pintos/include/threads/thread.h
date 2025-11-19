@@ -8,6 +8,9 @@
 #ifdef VM
 #include "vm/vm.h"
 #endif
+#ifdef USERPROG
+#define USERPROG
+#endif
 
 /* States in a thread's life cycle. */
 enum thread_status {
@@ -20,7 +23,7 @@ enum thread_status {
 /* Thread identifier type.
    You can redefine this to whatever type you like. */
 typedef int tid_t;
-#define TID_ERROR ((tid_t)-1) /* Error value for tid_t. */
+#define TID_ERROR ((tid_t) - 1) /* Error value for tid_t. */
 
 /* Thread priorities. */
 #define PRI_MIN 0      /* Lowest priority. */
@@ -97,6 +100,8 @@ struct thread {
     struct list lock_held_list;
     int original_priority;
     struct lock *waiting_lock;
+    struct file **file_descriptor_table; /* FDT의 시작 주소를 가리키는 포인터 */
+    int exit_code;
 
     int exit_code; // exit()호출되면 남김
 
