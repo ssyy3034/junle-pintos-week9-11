@@ -218,14 +218,12 @@ int process_wait(tid_t child_tid UNUSED)
 void process_exit(void)
 {
     struct thread *curr = thread_current();
-    printf("%s: exit(%d)\n", curr->name, curr->exit_code);
     /* TODO: Your code goes here.
      * TODO: Implement process termination message (see
      * TODO: project2/process_termination.html).
      * TODO: We recommend you to implement process resource cleanup here. */
     // 프로세스 끝날때 [ 'args-none: exit(exit번호)' ]가 출력돼야함!====
     printf("%s: exit(%d)\n", curr->name, curr->exit_code);
-
     process_cleanup();
 }
 
