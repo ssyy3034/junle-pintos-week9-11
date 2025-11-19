@@ -212,68 +212,61 @@ int process_exec(void *f_name)
 int process_wait(tid_t child_tid UNUSED)
 {
     timer_sleep(200);
-    int process_wait(tid_t child_tid UNUSED)
-    {
-        /* XXX: Hint) The pintos exit if process_wait (initd), we recommend you
-         * XXX:       to add infinite loop here before
-         * XXX:       implementing the process_wait. */
-        timer_sleep(10);
-        return -1;
-    }
+}
 
-    /* Exit the process. This function is called by thread_exit (). */
-    void process_exit(void)
-    {
-        struct thread *curr = thread_current();
-        printf("%s: exit(%d)\n", curr->name, curr->exit_code);
-        /* TODO: Your code goes here.
-         * TODO: Implement process termination message (see
-         * TODO: project2/process_termination.html).
-         * TODO: We recommend you to implement process resource cleanup here. */
-        // 프로세스 끝날때 [ 'args-none: exit(exit번호)' ]가 출력돼야함!====
-        printf("%s: exit(%d)\n", curr->name, curr->exit_code);
+/* Exit the process. This function is called by thread_exit (). */
+void process_exit(void)
+{
+    struct thread *curr = thread_current();
+    printf("%s: exit(%d)\n", curr->name, curr->exit_code);
+    /* TODO: Your code goes here.
+     * TODO: Implement process termination message (see
+     * TODO: project2/process_termination.html).
+     * TODO: We recommend you to implement process resource cleanup here. */
+    // 프로세스 끝날때 [ 'args-none: exit(exit번호)' ]가 출력돼야함!====
+    printf("%s: exit(%d)\n", curr->name, curr->exit_code);
 
-        process_cleanup();
-    }
+    process_cleanup();
+}
 
-    /* Free the current process's resources. */
-    static void process_cleanup(void)
-    {
-        struct thread *curr = thread_current();
+/* Free the current process's resources. */
+static void process_cleanup(void)
+{
+    struct thread *curr = thread_current();
 
 #ifdef VM
-        supplemental_page_table_kill(&curr->spt);
+    supplemental_page_table_kill(&curr->spt);
 #endif
 
-        uint64_t *pml4;
-        /* Destroy the current process's page directory and switch back
-         * to the kernel-only page directory. */
-        pml4 = curr->pml4;
-        if (pml4 != NULL)
-        {
-            /* Correct ordering here is crucial.  We must set
-             * cur->pagedir to NULL before switching page directories,
-             * so that a timer interrupt can't switch back to the
-             * process page directory.  We must activate the base page
-             * directory before destroying the process's page
-             * directory, or our active page directory will be one
-             * that's been freed (and cleared). */
-            curr->pml4 = NULL;
-            pml4_activate(NULL);
-            pml4_destroy(pml4);
-        }
-    }
-
-    /* Sets up the CPU for running user code in the nest thread.
-     * This function is called on every context switch. */
-    void process_activate(struct thread * next)
+    uint64_t *pml4;
+    /* Destroy the current process's page directory and switch back
+     * to the kernel-only page directory. */
+    pml4 = curr->pml4;
+    if (pml4 != NULL)
     {
-        /* Activate thread's page tables. */
-        pml4_activate(next->pml4);
-
-        /* Set thread's kernel stack for use in processing interrupts. */
-        tss_update(next);
+        /* Correct ordering here is crucial.  We must set
+         * cur->pagedir to NULL before switching page directories,
+         * so that a timer interrupt can't switch back to the
+         * process page directory.  We must activate the base page
+         * directory before destroying the process's page
+         * directory, or our active page directory will be one
+         * that's been freed (and cleared). */
+        curr->pml4 = NULL;
+        pml4_activate(NULL);
+        pml4_destroy(pml4);
     }
+}
+
+/* Sets up the CPU for running user code in the nest thread.
+ * This function is called on every context switch. */
+void process_activate(struct thread *next)
+{
+    /* Activate thread's page tables. */
+    pml4_activate(next->pml4);
+
+    /* Set thread's kernel stack for use in processing interrupts. */
+    tss_update(next);
+}
 
 /* We load ELF binaries.  The following definitions are taken
  * from the ELF specification, [ELF1], more-or-less verbatim.  */
@@ -294,436 +287,436 @@ int process_wait(tid_t child_tid UNUSED)
 #define PF_W 2 /* Writable. */
 #define PF_R 4 /* Readable. */
 
-    /* Executable header.  See [ELF1] 1-4 to 1-8.
-     * This appears at the very beginning of an ELF binary. */
-    struct ELF64_hdr {
-        unsigned char e_ident[EI_NIDENT];
-        uint16_t e_type;
-        uint16_t e_machine;
-        uint32_t e_version;
-        uint64_t e_entry;
-        uint64_t e_phoff;
-        uint64_t e_shoff;
-        uint32_t e_flags;
-        uint16_t e_ehsize;
-        uint16_t e_phentsize;
-        uint16_t e_phnum;
-        uint16_t e_shentsize;
-        uint16_t e_shnum;
-        uint16_t e_shstrndx;
-    };
+/* Executable header.  See [ELF1] 1-4 to 1-8.
+ * This appears at the very beginning of an ELF binary. */
+struct ELF64_hdr {
+    unsigned char e_ident[EI_NIDENT];
+    uint16_t e_type;
+    uint16_t e_machine;
+    uint32_t e_version;
+    uint64_t e_entry;
+    uint64_t e_phoff;
+    uint64_t e_shoff;
+    uint32_t e_flags;
+    uint16_t e_ehsize;
+    uint16_t e_phentsize;
+    uint16_t e_phnum;
+    uint16_t e_shentsize;
+    uint16_t e_shnum;
+    uint16_t e_shstrndx;
+};
 
-    struct ELF64_PHDR {
-        uint32_t p_type;
-        uint32_t p_flags;
-        uint64_t p_offset;
-        uint64_t p_vaddr;
-        uint64_t p_paddr;
-        uint64_t p_filesz;
-        uint64_t p_memsz;
-        uint64_t p_align;
-    };
+struct ELF64_PHDR {
+    uint32_t p_type;
+    uint32_t p_flags;
+    uint64_t p_offset;
+    uint64_t p_vaddr;
+    uint64_t p_paddr;
+    uint64_t p_filesz;
+    uint64_t p_memsz;
+    uint64_t p_align;
+};
 
 /* Abbreviations */
 #define ELF ELF64_hdr
 #define Phdr ELF64_PHDR
 
-    static bool setup_stack(struct intr_frame * if_);
-    static bool validate_segment(const struct Phdr *, struct file *);
-    static bool load_segment(struct file * file, off_t ofs, uint8_t *upage, uint32_t read_bytes, uint32_t zero_bytes,
-                             bool writable);
+static bool setup_stack(struct intr_frame *if_);
+static bool validate_segment(const struct Phdr *, struct file *);
+static bool load_segment(struct file *file, off_t ofs, uint8_t *upage, uint32_t read_bytes, uint32_t zero_bytes,
+                         bool writable);
 
-    /* Loads an ELF executable from FILE_NAME into the current thread.
-     * Stores the executable's entry point into *RIP
-     * and its initial stack pointer into *RSP.
-     * Returns true if successful, false otherwise. */
-    static bool load(const char *file_name, struct intr_frame *if_)
+/* Loads an ELF executable from FILE_NAME into the current thread.
+ * Stores the executable's entry point into *RIP
+ * and its initial stack pointer into *RSP.
+ * Returns true if successful, false otherwise. */
+static bool load(const char *file_name, struct intr_frame *if_)
+{
+    struct thread *t = thread_current();
+    struct ELF ehdr;
+    struct file *file = NULL;
+    off_t file_ofs;
+    bool success = false;
+    int i;
+    char *tmp;
+    char *file_name_r = palloc_get_page(0);
+
+    strlcpy(file_name_r, file_name, PGSIZE);
+
+    file_name_r = strtok_r(file_name_r, " ", &tmp);
+
+    /* Allocate and activate page directory. */
+    t->pml4 = pml4_create();
+    if (t->pml4 == NULL)
+        goto done;
+    process_activate(thread_current());
+
+    // 1) 인자 자르기 ========================
+    int arg_c = 0;    // 인자 개수
+    char *arg_v[128]; // 각 인자 담을 문자열
+    char *save_ptr;
+
+    arg_v[arg_c] = strtok_r(file_name, " ", &save_ptr);
+
+    while (arg_v[arg_c] != NULL && arg_c < 127)
     {
-        struct thread *t = thread_current();
-        struct ELF ehdr;
-        struct file *file = NULL;
-        off_t file_ofs;
-        bool success = false;
-        int i;
-        char *tmp;
-        char *file_name_r = palloc_get_page(0);
+        arg_c++;
+        arg_v[arg_c] = strtok_r(NULL, " ", &save_ptr);
+    }
 
-        strlcpy(file_name_r, file_name, PGSIZE);
+    file_name = arg_v[0];
+    // 파일명 없는 경우 방어
+    if (file_name == NULL)
+    {
+        printf("load: no file name\n");
+        goto done;
+    }
+    //  ========================
+    /* Open executable file. */
+    file = filesys_open(file_name);
+    if (file == NULL)
+    {
+        printf("load: %s: open failed\n", file_name);
+        goto done;
+    }
 
-        file_name_r = strtok_r(file_name_r, " ", &tmp);
+    /* Read and verify executable header. */
+    if (file_read(file, &ehdr, sizeof ehdr) != sizeof ehdr || memcmp(ehdr.e_ident, "\177ELF\2\1\1", 7) ||
+        ehdr.e_type != 2 || ehdr.e_machine != 0x3E // amd64
+        || ehdr.e_version != 1 || ehdr.e_phentsize != sizeof(struct Phdr) || ehdr.e_phnum > 1024)
+    {
+        printf("load: %s: error loading executable\n", file_name);
+        goto done;
+    }
 
-        /* Allocate and activate page directory. */
-        t->pml4 = pml4_create();
-        if (t->pml4 == NULL)
+    /* Read program headers. */
+    file_ofs = ehdr.e_phoff;
+    for (i = 0; i < ehdr.e_phnum; i++)
+    {
+        struct Phdr phdr;
+
+        if (file_ofs < 0 || file_ofs > file_length(file))
             goto done;
-        process_activate(thread_current());
+        file_seek(file, file_ofs);
 
-        // 1) 인자 자르기 ========================
-        int arg_c = 0;    // 인자 개수
-        char *arg_v[128]; // 각 인자 담을 문자열
-        char *save_ptr;
-
-        arg_v[arg_c] = strtok_r(file_name, " ", &save_ptr);
-
-        while (arg_v[arg_c] != NULL && arg_c < 127)
-        {
-            arg_c++;
-            arg_v[arg_c] = strtok_r(NULL, " ", &save_ptr);
-        }
-
-        file_name = arg_v[0];
-        // 파일명 없는 경우 방어
-        if (file_name == NULL)
-        {
-            printf("load: no file name\n");
+        if (file_read(file, &phdr, sizeof phdr) != sizeof phdr)
             goto done;
-        }
-        //  ========================
-        /* Open executable file. */
-        file = filesys_open(file_name);
-        if (file == NULL)
+        file_ofs += sizeof phdr;
+        switch (phdr.p_type)
         {
-            printf("load: %s: open failed\n", file_name);
-            goto done;
-        }
-
-        /* Read and verify executable header. */
-        if (file_read(file, &ehdr, sizeof ehdr) != sizeof ehdr || memcmp(ehdr.e_ident, "\177ELF\2\1\1", 7) ||
-            ehdr.e_type != 2 || ehdr.e_machine != 0x3E // amd64
-            || ehdr.e_version != 1 || ehdr.e_phentsize != sizeof(struct Phdr) || ehdr.e_phnum > 1024)
-        {
-            printf("load: %s: error loading executable\n", file_name);
-            goto done;
-        }
-
-        /* Read program headers. */
-        file_ofs = ehdr.e_phoff;
-        for (i = 0; i < ehdr.e_phnum; i++)
-        {
-            struct Phdr phdr;
-
-            if (file_ofs < 0 || file_ofs > file_length(file))
+            case PT_NULL:
+            case PT_NOTE:
+            case PT_PHDR:
+            case PT_STACK:
+            default:
+                /* Ignore this segment. */
+                break;
+            case PT_DYNAMIC:
+            case PT_INTERP:
+            case PT_SHLIB:
                 goto done;
-            file_seek(file, file_ofs);
-
-            if (file_read(file, &phdr, sizeof phdr) != sizeof phdr)
-                goto done;
-            file_ofs += sizeof phdr;
-            switch (phdr.p_type)
-            {
-                case PT_NULL:
-                case PT_NOTE:
-                case PT_PHDR:
-                case PT_STACK:
-                default:
-                    /* Ignore this segment. */
-                    break;
-                case PT_DYNAMIC:
-                case PT_INTERP:
-                case PT_SHLIB:
-                    goto done;
-                case PT_LOAD:
-                    if (validate_segment(&phdr, file))
+            case PT_LOAD:
+                if (validate_segment(&phdr, file))
+                {
+                    bool writable = (phdr.p_flags & PF_W) != 0;
+                    uint64_t file_page = phdr.p_offset & ~PGMASK;
+                    uint64_t mem_page = phdr.p_vaddr & ~PGMASK;
+                    uint64_t page_offset = phdr.p_vaddr & PGMASK;
+                    uint32_t read_bytes, zero_bytes;
+                    if (phdr.p_filesz > 0)
                     {
-                        bool writable = (phdr.p_flags & PF_W) != 0;
-                        uint64_t file_page = phdr.p_offset & ~PGMASK;
-                        uint64_t mem_page = phdr.p_vaddr & ~PGMASK;
-                        uint64_t page_offset = phdr.p_vaddr & PGMASK;
-                        uint32_t read_bytes, zero_bytes;
-                        if (phdr.p_filesz > 0)
-                        {
-                            /* Normal segment.
-                             * Read initial part from disk and zero the rest. */
-                            read_bytes = page_offset + phdr.p_filesz;
-                            zero_bytes = (ROUND_UP(page_offset + phdr.p_memsz, PGSIZE) - read_bytes);
-                        } else
-                        {
-                            /* Entirely zero.
-                             * Don't read anything from disk. */
-                            read_bytes = 0;
-                            zero_bytes = ROUND_UP(page_offset + phdr.p_memsz, PGSIZE);
-                        }
-                        if (!load_segment(file, file_page, (void *)mem_page, read_bytes, zero_bytes, writable))
-                            goto done;
+                        /* Normal segment.
+                         * Read initial part from disk and zero the rest. */
+                        read_bytes = page_offset + phdr.p_filesz;
+                        zero_bytes = (ROUND_UP(page_offset + phdr.p_memsz, PGSIZE) - read_bytes);
                     } else
+                    {
+                        /* Entirely zero.
+                         * Don't read anything from disk. */
+                        read_bytes = 0;
+                        zero_bytes = ROUND_UP(page_offset + phdr.p_memsz, PGSIZE);
+                    }
+                    if (!load_segment(file, file_page, (void *)mem_page, read_bytes, zero_bytes, writable))
                         goto done;
-                    break;
-            }
+                } else
+                    goto done;
+                break;
         }
-
-        /* Set up stack. */
-        if (!setup_stack(if_))
-            goto done;
-
-        /* Start address. */
-        if_->rip = ehdr.e_entry;
-
-        // 2) 스택에 인자데이터 쌓기 ========================
-        // int len_sum = 0;                   // 각 인자 길이의 합(패딩 계산용)
-        char *argvP[128];                  // 각 인자 주소 담을 배열
-        uint8_t *sp = (uint8_t *)if_->rsp; // rsp: 정수형
-        // ->주소로 넣어야해서 1Byte단위로 형변환(메모리공간은 1바이트단위로 접근 가능)
-        for (int idx = 0; idx < arg_c; idx++)
-        {
-            int len = strlen(arg_v[idx]) + 1; //+1: '\0'(널문자)
-            // len_sum += len;
-
-            sp -= len;
-            memcpy(sp, arg_v[idx], len); // 넣을 "주소", char*데이터 주소, 사이즈
-
-            // argvP[idx] = &arg_v[idx]; ->틀린이유: 궁금한건 커널 배열 주소가 아닌 유저스택에 복사된 주소
-            argvP[idx] = (char *)sp;
-        }
-        //   3) 스택에 패딩 쌓기 ========================
-        while (((uint8_t *)USER_STACK - sp) % 8 != 0) //->권장:  while ((uint64_t)sp % 8 != 0)
-        {
-            sp--;
-            *sp = 0;
-        }
-
-        // 4) 스택에 인자들 주소 순서대로 쌓기 ========================
-        int len = sizeof(char *);
-        char *emptyP = NULL;
-        STACK_DOWN_UNIT64(sp);
-        memcpy(sp, &emptyP, len); // 포인터배열 내 끝은 항상 NULL (cf. 문자배열 내 끝:'\0')
-        for (int idx = arg_c - 1; idx >= 0; idx--)
-        {
-            STACK_DOWN_UNIT64(sp);
-            memcpy(sp, &argvP[idx], len);
-        }
-        char **lastArgP = (char **)sp; // char* arv[0]의 주소
-
-        // 5) 스택에 리턴 주소 쌓기(fake) ========================
-        void *fake_ret = NULL;
-        STACK_DOWN_UNIT64(sp);
-        memcpy(sp, &fake_ret, sizeof(void *));
-
-        // 6) 진짜 rsp 포인터 업데이트 ========================
-        if_->rsp = (uint64_t)sp;
-
-        // 7) RDI, RSI 업데이트  ========================
-        if_->R.rdi = arg_c;
-        if_->R.rsi = lastArgP;
-
-        success = true;
-
-    done:
-        /* We arrive here whether the load is successful or not. */
-        file_close(file);
-        return success;
     }
 
-    /* Checks whether PHDR describes a valid, loadable segment in
-     * FILE and returns true if so, false otherwise. */
-    static bool validate_segment(const struct Phdr *phdr, struct file *file)
+    /* Set up stack. */
+    if (!setup_stack(if_))
+        goto done;
+
+    /* Start address. */
+    if_->rip = ehdr.e_entry;
+
+    // 2) 스택에 인자데이터 쌓기 ========================
+    // int len_sum = 0;                   // 각 인자 길이의 합(패딩 계산용)
+    char *argvP[128];                  // 각 인자 주소 담을 배열
+    uint8_t *sp = (uint8_t *)if_->rsp; // rsp: 정수형
+    // ->주소로 넣어야해서 1Byte단위로 형변환(메모리공간은 1바이트단위로 접근 가능)
+    for (int idx = 0; idx < arg_c; idx++)
     {
-        /* p_offset and p_vaddr must have the same page offset. */
-        if ((phdr->p_offset & PGMASK) != (phdr->p_vaddr & PGMASK))
-            return false;
+        int len = strlen(arg_v[idx]) + 1; //+1: '\0'(널문자)
+        // len_sum += len;
 
-        /* p_offset must point within FILE. */
-        if (phdr->p_offset > (uint64_t)file_length(file))
-            return false;
+        sp -= len;
+        memcpy(sp, arg_v[idx], len); // 넣을 "주소", char*데이터 주소, 사이즈
 
-        /* p_memsz must be at least as big as p_filesz. */
-        if (phdr->p_memsz < phdr->p_filesz)
-            return false;
-
-        /* The segment must not be empty. */
-        if (phdr->p_memsz == 0)
-            return false;
-
-        /* The virtual memory region must both start and end within the
-           user address space range. */
-        if (!is_user_vaddr((void *)phdr->p_vaddr))
-            return false;
-        if (!is_user_vaddr((void *)(phdr->p_vaddr + phdr->p_memsz)))
-            return false;
-
-        /* The region cannot "wrap around" across the kernel virtual
-           address space. */
-        if (phdr->p_vaddr + phdr->p_memsz < phdr->p_vaddr)
-            return false;
-
-        /* Disallow mapping page 0.
-           Not only is it a bad idea to map page 0, but if we allowed
-           it then user code that passed a null pointer to system calls
-           could quite likely panic the kernel by way of null pointer
-           assertions in memcpy(), etc. */
-        if (phdr->p_vaddr < PGSIZE)
-            return false;
-
-        /* It's okay. */
-        return true;
+        // argvP[idx] = &arg_v[idx]; ->틀린이유: 궁금한건 커널 배열 주소가 아닌 유저스택에 복사된 주소
+        argvP[idx] = (char *)sp;
     }
+    //   3) 스택에 패딩 쌓기 ========================
+    while (((uint8_t *)USER_STACK - sp) % 8 != 0) //->권장:  while ((uint64_t)sp % 8 != 0)
+    {
+        sp--;
+        *sp = 0;
+    }
+
+    // 4) 스택에 인자들 주소 순서대로 쌓기 ========================
+    int len = sizeof(char *);
+    char *emptyP = NULL;
+    STACK_DOWN_UNIT64(sp);
+    memcpy(sp, &emptyP, len); // 포인터배열 내 끝은 항상 NULL (cf. 문자배열 내 끝:'\0')
+    for (int idx = arg_c - 1; idx >= 0; idx--)
+    {
+        STACK_DOWN_UNIT64(sp);
+        memcpy(sp, &argvP[idx], len);
+    }
+    char **lastArgP = (char **)sp; // char* arv[0]의 주소
+
+    // 5) 스택에 리턴 주소 쌓기(fake) ========================
+    void *fake_ret = NULL;
+    STACK_DOWN_UNIT64(sp);
+    memcpy(sp, &fake_ret, sizeof(void *));
+
+    // 6) 진짜 rsp 포인터 업데이트 ========================
+    if_->rsp = (uint64_t)sp;
+
+    // 7) RDI, RSI 업데이트  ========================
+    if_->R.rdi = arg_c;
+    if_->R.rsi = lastArgP;
+
+    success = true;
+
+done:
+    /* We arrive here whether the load is successful or not. */
+    file_close(file);
+    return success;
+}
+
+/* Checks whether PHDR describes a valid, loadable segment in
+ * FILE and returns true if so, false otherwise. */
+static bool validate_segment(const struct Phdr *phdr, struct file *file)
+{
+    /* p_offset and p_vaddr must have the same page offset. */
+    if ((phdr->p_offset & PGMASK) != (phdr->p_vaddr & PGMASK))
+        return false;
+
+    /* p_offset must point within FILE. */
+    if (phdr->p_offset > (uint64_t)file_length(file))
+        return false;
+
+    /* p_memsz must be at least as big as p_filesz. */
+    if (phdr->p_memsz < phdr->p_filesz)
+        return false;
+
+    /* The segment must not be empty. */
+    if (phdr->p_memsz == 0)
+        return false;
+
+    /* The virtual memory region must both start and end within the
+       user address space range. */
+    if (!is_user_vaddr((void *)phdr->p_vaddr))
+        return false;
+    if (!is_user_vaddr((void *)(phdr->p_vaddr + phdr->p_memsz)))
+        return false;
+
+    /* The region cannot "wrap around" across the kernel virtual
+       address space. */
+    if (phdr->p_vaddr + phdr->p_memsz < phdr->p_vaddr)
+        return false;
+
+    /* Disallow mapping page 0.
+       Not only is it a bad idea to map page 0, but if we allowed
+       it then user code that passed a null pointer to system calls
+       could quite likely panic the kernel by way of null pointer
+       assertions in memcpy(), etc. */
+    if (phdr->p_vaddr < PGSIZE)
+        return false;
+
+    /* It's okay. */
+    return true;
+}
 
 #ifndef VM
-    /* Codes of this block will be ONLY USED DURING project 2.
-     * If you want to implement the function for whole project 2, implement it
-     * outside of #ifndef macro. */
+/* Codes of this block will be ONLY USED DURING project 2.
+ * If you want to implement the function for whole project 2, implement it
+ * outside of #ifndef macro. */
 
-    /* load() helpers. */
-    static bool install_page(void *upage, void *kpage, bool writable);
+/* load() helpers. */
+static bool install_page(void *upage, void *kpage, bool writable);
 
-    /* Loads a segment starting at offset OFS in FILE at address
-     * UPAGE.  In total, READ_BYTES + ZERO_BYTES bytes of virtual
-     * memory are initialized, as follows:
-     *
-     * - READ_BYTES bytes at UPAGE must be read from FILE
-     * starting at offset OFS.
-     *
-     * - ZERO_BYTES bytes at UPAGE + READ_BYTES must be zeroed.
-     *
-     * The pages initialized by this function must be writable by the
-     * user process if WRITABLE is true, read-only otherwise.
-     *
-     * Return true if successful, false if a memory allocation error
-     * or disk read error occurs. */
-    static bool load_segment(struct file * file, off_t ofs, uint8_t *upage, uint32_t read_bytes, uint32_t zero_bytes,
-                             bool writable)
+/* Loads a segment starting at offset OFS in FILE at address
+ * UPAGE.  In total, READ_BYTES + ZERO_BYTES bytes of virtual
+ * memory are initialized, as follows:
+ *
+ * - READ_BYTES bytes at UPAGE must be read from FILE
+ * starting at offset OFS.
+ *
+ * - ZERO_BYTES bytes at UPAGE + READ_BYTES must be zeroed.
+ *
+ * The pages initialized by this function must be writable by the
+ * user process if WRITABLE is true, read-only otherwise.
+ *
+ * Return true if successful, false if a memory allocation error
+ * or disk read error occurs. */
+static bool load_segment(struct file *file, off_t ofs, uint8_t *upage, uint32_t read_bytes, uint32_t zero_bytes,
+                         bool writable)
+{
+    ASSERT((read_bytes + zero_bytes) % PGSIZE == 0);
+    ASSERT(pg_ofs(upage) == 0);
+    ASSERT(ofs % PGSIZE == 0);
+
+    file_seek(file, ofs);
+    while (read_bytes > 0 || zero_bytes > 0)
     {
-        ASSERT((read_bytes + zero_bytes) % PGSIZE == 0);
-        ASSERT(pg_ofs(upage) == 0);
-        ASSERT(ofs % PGSIZE == 0);
+        /* Do calculate how to fill this page.
+         * We will read PAGE_READ_BYTES bytes from FILE
+         * and zero the final PAGE_ZERO_BYTES bytes. */
+        size_t page_read_bytes = read_bytes < PGSIZE ? read_bytes : PGSIZE;
+        size_t page_zero_bytes = PGSIZE - page_read_bytes;
 
-        file_seek(file, ofs);
-        while (read_bytes > 0 || zero_bytes > 0)
+        /* Get a page of memory. */
+        uint8_t *kpage = palloc_get_page(PAL_USER);
+        if (kpage == NULL)
+            return false;
+
+        /* Load this page. */
+        if (file_read(file, kpage, page_read_bytes) != (int)page_read_bytes)
         {
-            /* Do calculate how to fill this page.
-             * We will read PAGE_READ_BYTES bytes from FILE
-             * and zero the final PAGE_ZERO_BYTES bytes. */
-            size_t page_read_bytes = read_bytes < PGSIZE ? read_bytes : PGSIZE;
-            size_t page_zero_bytes = PGSIZE - page_read_bytes;
-
-            /* Get a page of memory. */
-            uint8_t *kpage = palloc_get_page(PAL_USER);
-            if (kpage == NULL)
-                return false;
-
-            /* Load this page. */
-            if (file_read(file, kpage, page_read_bytes) != (int)page_read_bytes)
-            {
-                palloc_free_page(kpage);
-                return false;
-            }
-            memset(kpage + page_read_bytes, 0, page_zero_bytes);
-
-            /* Add the page to the process's address space. */
-            if (!install_page(upage, kpage, writable))
-            {
-                printf("fail\n");
-                palloc_free_page(kpage);
-                return false;
-            }
-
-            /* Advance. */
-            read_bytes -= page_read_bytes;
-            zero_bytes -= page_zero_bytes;
-            upage += PGSIZE;
+            palloc_free_page(kpage);
+            return false;
         }
-        return true;
-    }
+        memset(kpage + page_read_bytes, 0, page_zero_bytes);
 
-    /* Create a minimal stack by mapping a zeroed page at the USER_STACK */
-    static bool setup_stack(struct intr_frame * if_)
-    {
-        uint8_t *kpage;
-        bool success = false;
-
-        kpage = palloc_get_page(PAL_USER | PAL_ZERO);
-        if (kpage != NULL)
+        /* Add the page to the process's address space. */
+        if (!install_page(upage, kpage, writable))
         {
-            success = install_page(((uint8_t *)USER_STACK) - PGSIZE, kpage, true);
-            if (success)
-                if_->rsp = USER_STACK;
-            else
-                palloc_free_page(kpage);
+            printf("fail\n");
+            palloc_free_page(kpage);
+            return false;
         }
-        return success;
-    }
 
-    /* Adds a mapping from user virtual address UPAGE to kernel
-     * virtual address KPAGE to the page table.
-     * If WRITABLE is true, the user process may modify the page;
-     * otherwise, it is read-only.
-     * UPAGE must not already be mapped.
-     * KPAGE should probably be a page obtained from the user pool
-     * with palloc_get_page().
-     * Returns true on success, false if UPAGE is already mapped or
-     * if memory allocation fails. */
-    static bool install_page(void *upage, void *kpage, bool writable)
+        /* Advance. */
+        read_bytes -= page_read_bytes;
+        zero_bytes -= page_zero_bytes;
+        upage += PGSIZE;
+    }
+    return true;
+}
+
+/* Create a minimal stack by mapping a zeroed page at the USER_STACK */
+static bool setup_stack(struct intr_frame *if_)
+{
+    uint8_t *kpage;
+    bool success = false;
+
+    kpage = palloc_get_page(PAL_USER | PAL_ZERO);
+    if (kpage != NULL)
     {
-        struct thread *t = thread_current();
-
-        /* Verify that there's not already a page at that virtual
-         * address, then map our page there. */
-        return (pml4_get_page(t->pml4, upage) == NULL && pml4_set_page(t->pml4, upage, kpage, writable));
+        success = install_page(((uint8_t *)USER_STACK) - PGSIZE, kpage, true);
+        if (success)
+            if_->rsp = USER_STACK;
+        else
+            palloc_free_page(kpage);
     }
+    return success;
+}
+
+/* Adds a mapping from user virtual address UPAGE to kernel
+ * virtual address KPAGE to the page table.
+ * If WRITABLE is true, the user process may modify the page;
+ * otherwise, it is read-only.
+ * UPAGE must not already be mapped.
+ * KPAGE should probably be a page obtained from the user pool
+ * with palloc_get_page().
+ * Returns true on success, false if UPAGE is already mapped or
+ * if memory allocation fails. */
+static bool install_page(void *upage, void *kpage, bool writable)
+{
+    struct thread *t = thread_current();
+
+    /* Verify that there's not already a page at that virtual
+     * address, then map our page there. */
+    return (pml4_get_page(t->pml4, upage) == NULL && pml4_set_page(t->pml4, upage, kpage, writable));
+}
 #else
-    /* From here, codes will be used after project 3.
-     * If you want to implement the function for only project 2, implement it on the
-     * upper block. */
+/* From here, codes will be used after project 3.
+ * If you want to implement the function for only project 2, implement it on the
+ * upper block. */
 
-    static bool lazy_load_segment(struct page * page, void *aux)
+static bool lazy_load_segment(struct page *page, void *aux)
+{
+    /* TODO: Load the segment from the file */
+    /* TODO: This called when the first page fault occurs on address VA. */
+    /* TODO: VA is available when calling this function. */
+}
+
+/* Loads a segment starting at offset OFS in FILE at address
+ * UPAGE.  In total, READ_BYTES + ZERO_BYTES bytes of virtual
+ * memory are initialized, as follows:
+ *
+ * - READ_BYTES bytes at UPAGE must be read from FILE
+ * starting at offset OFS.
+ *
+ * - ZERO_BYTES bytes at UPAGE + READ_BYTES must be zeroed.
+ *
+ * The pages initialized by this function must be writable by the
+ * user process if WRITABLE is true, read-only otherwise.
+ *
+ * Return true if successful, false if a memory allocation error
+ * or disk read error occurs. */
+static bool load_segment(struct file *file, off_t ofs, uint8_t *upage, uint32_t read_bytes, uint32_t zero_bytes,
+                         bool writable)
+{
+    ASSERT((read_bytes + zero_bytes) % PGSIZE == 0);
+    ASSERT(pg_ofs(upage) == 0);
+    ASSERT(ofs % PGSIZE == 0);
+
+    while (read_bytes > 0 || zero_bytes > 0)
     {
-        /* TODO: Load the segment from the file */
-        /* TODO: This called when the first page fault occurs on address VA. */
-        /* TODO: VA is available when calling this function. */
+        /* Do calculate how to fill this page.
+         * We will read PAGE_READ_BYTES bytes from FILE
+         * and zero the final PAGE_ZERO_BYTES bytes. */
+        size_t page_read_bytes = read_bytes < PGSIZE ? read_bytes : PGSIZE;
+        size_t page_zero_bytes = PGSIZE - page_read_bytes;
+
+        /* TODO: Set up aux to pass information to the lazy_load_segment. */
+        void *aux = NULL;
+        if (!vm_alloc_page_with_initializer(VM_ANON, upage, writable, lazy_load_segment, aux))
+            return false;
+
+        /* Advance. */
+        read_bytes -= page_read_bytes;
+        zero_bytes -= page_zero_bytes;
+        upage += PGSIZE;
     }
+    return true;
+}
 
-    /* Loads a segment starting at offset OFS in FILE at address
-     * UPAGE.  In total, READ_BYTES + ZERO_BYTES bytes of virtual
-     * memory are initialized, as follows:
-     *
-     * - READ_BYTES bytes at UPAGE must be read from FILE
-     * starting at offset OFS.
-     *
-     * - ZERO_BYTES bytes at UPAGE + READ_BYTES must be zeroed.
-     *
-     * The pages initialized by this function must be writable by the
-     * user process if WRITABLE is true, read-only otherwise.
-     *
-     * Return true if successful, false if a memory allocation error
-     * or disk read error occurs. */
-    static bool load_segment(struct file * file, off_t ofs, uint8_t *upage, uint32_t read_bytes, uint32_t zero_bytes,
-                             bool writable)
-    {
-        ASSERT((read_bytes + zero_bytes) % PGSIZE == 0);
-        ASSERT(pg_ofs(upage) == 0);
-        ASSERT(ofs % PGSIZE == 0);
+/* Create a PAGE of stack at the USER_STACK. Return true on success. */
+static bool setup_stack(struct intr_frame *if_)
+{
+    bool success = false;
+    void *stack_bottom = (void *)(((uint8_t *)USER_STACK) - PGSIZE);
 
-        while (read_bytes > 0 || zero_bytes > 0)
-        {
-            /* Do calculate how to fill this page.
-             * We will read PAGE_READ_BYTES bytes from FILE
-             * and zero the final PAGE_ZERO_BYTES bytes. */
-            size_t page_read_bytes = read_bytes < PGSIZE ? read_bytes : PGSIZE;
-            size_t page_zero_bytes = PGSIZE - page_read_bytes;
+    /* TODO: Map the stack on stack_bottom and claim the page immediately.
+     * TODO: If success, set the rsp accordingly.
+     * TODO: You should mark the page is stack. */
+    /* TODO: Your code goes here */
 
-            /* TODO: Set up aux to pass information to the lazy_load_segment. */
-            void *aux = NULL;
-            if (!vm_alloc_page_with_initializer(VM_ANON, upage, writable, lazy_load_segment, aux))
-                return false;
-
-            /* Advance. */
-            read_bytes -= page_read_bytes;
-            zero_bytes -= page_zero_bytes;
-            upage += PGSIZE;
-        }
-        return true;
-    }
-
-    /* Create a PAGE of stack at the USER_STACK. Return true on success. */
-    static bool setup_stack(struct intr_frame * if_)
-    {
-        bool success = false;
-        void *stack_bottom = (void *)(((uint8_t *)USER_STACK) - PGSIZE);
-
-        /* TODO: Map the stack on stack_bottom and claim the page immediately.
-         * TODO: If success, set the rsp accordingly.
-         * TODO: You should mark the page is stack. */
-        /* TODO: Your code goes here */
-
-        return success;
-    }
+    return success;
+}
 #endif /* VM */
