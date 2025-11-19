@@ -100,9 +100,7 @@ struct thread {
     struct list lock_held_list;
     int original_priority;
     struct lock *waiting_lock;
-    struct file **file_descriptor_table; /* FDT의 시작 주소를 가리키는 포인터 */
-    int exit_code;
-
+    struct file **file_descriptor_table;
     int exit_code; // exit()호출되면 남김
 
 #ifdef USERPROG
