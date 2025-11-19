@@ -54,7 +54,7 @@ void syscall_handler(struct intr_frame *f UNUSED) {
 
     case SYS_EXIT:
         int status = f->R.rdi;
-        thread_current()->exit_status = status;
+        thread_current()->exit_code = status;
         thread_exit();
         break;
 
@@ -93,7 +93,7 @@ void syscall_handler(struct intr_frame *f UNUSED) {
             f->R.rax = -1;
             break;
         } else {
-            struct file **local_fdt = thread_current()->file_descripter_table;
+            struct file **local_fdt = thread_current()->file_descriptor_table;
             int open_fd = -1;
             for (int i = 2; i < 512; i++) {
                 if (local_fdt[i] == NULL) {
