@@ -7,6 +7,8 @@
 #include "userprog/gdt.h"
 #include "threads/flags.h"
 #include "intrinsic.h"
+#include "threads/init.h"
+#include "filesys/file.h"
 
 void syscall_entry(void);
 void syscall_handler(struct intr_frame *);
@@ -34,61 +36,113 @@ void syscall_init(void)
      * mode stack. Therefore, we masked the FLAG_FL. */
     write_msr(MSR_SYSCALL_MASK, FLAG_IF | FLAG_TF | FLAG_DF | FLAG_IOPL | FLAG_AC | FLAG_NT);
 }
+void error(void)
+{
+    thread_current()->exit_status = -1;
+    thread_exit();
+}
+void check(void *addr)
+{
+    if (addr == NULL || !is_user_vaddr(addr) || pml4_get_page(thread_current()->pml4, addr) == NULL)
+    {
+        error();
+    }
+}
 
 /* The main system call interface */
 void syscall_handler(struct intr_frame *f UNUSED)
 {
     switch (f->R.rax)
     {
-    case SYS_WRITE:
+        case SYS_HALT:
+            power_off();
+            break;
 
-        break;
+        case SYS_EXIT:
+            int status = f->R.rdi;
+            thread_current()->exit_status = status;
+            thread_exit();
+            break;
 
-    default:
-        break;
+        case SYS_CREATE:
+            char *file_name = f->R.rdi;
+            size_t file_size = f->R.rsi;
+
+            check(file_name);
+
+            if (*file_name == '\0')
+            {
+                f->R.rax = 0;
+                break;
+            } else if (file_name == NULL)
+            {
+                error();
+            }
+            if (!filesys_create(file_name, file_size))
+            {
+                f->R.rax = 0;
+            } else
+            {
+                f->R.rax = 1;
+            }
+
+            break;
+
+        case SYS_OPEN:
+
+            char *file_name_open = f->R.rdi;
+
+            check(file_name_open);
+
+            if (*file_name_open == '\0' || file_name_open == NULL)
+            {
+                f->R.rax = -1;
+                break;
+            }
+            struct file *open_file = filesys_open(file_name_open);
+            if (open_file == NULL)
+            {
+                f->R.rax = -1;
+                break;
+            } else
+            {
+                struct file **local_fdt = thread_current()->file_descripter_table;
+                int open_fd = -1;
+                for (int i = 2; i < 512; i++)
+                {
+                    if (local_fdt[i] == NULL)
+                    {
+                        local_fdt[i] = open_file;
+                        open_fd = i;
+                        break;
+                    }
+                }
+                if (open_fd == -1)
+                {
+                    file_close(open_file);
+                }
+                f->R.rax = open_fd;
+            }
+            break;
+
+        case SYS_WRITE:
+
+            int fd = f->R.rdi;
+            void *buf = f->R.rsi;
+            size_t size = f->R.rdx;
+
+            check(buf);
+
+            if (fd == 1)
+            {
+                putbuf(buf, size);
+                f->R.rax = size;
+            }
+            break;
+
+        default:
+            thread_exit();
+            break;
     }
     // TODO: Your implementation goes here.
-    printf("system call!\n");
-    thread_exit();
 }
-/*
- * =================================================
- * clang-tidy (정적 분석) 작동 테스트용 함수
- * =================================================
- * 이 함수를 process.c 또는 syscall.c 상단에 잠시 추가해 보세요.
- * VS Code에 물결무늬 경고가 표시되어야 합니다.
- */
-void test_clang_tidy_warnings(void)
-{
-    int x; // 버그 1: 초기화되지 않은 변수
-    int y = 0;
-    int *ptr = NULL; // 버그 2: NULL 포인터
-
-    /* * [물결무늬 1] clang-analyzer-core.uninitialized.UndefReturn
-     * 'x'가 초기화되지 않은 상태에서 사용될 수 있다고 경고해야 합니다.
-     */
-    if (x > 10)
-    {
-        y = 5;
-    }
-
-    /* * [물결무늬 2] clang-analyzer-core.NullDereference
-     * 'ptr'이 NULL일 수 있는데 역참조한다고 경고해야 합니다.
-     * (Pintos 커널 패닉의 주 원인!)
-     */
-    *ptr = 1;
-
-    /* * [물결무늬 3] bugprone-assignment-in-if-condition
-     * if문 안에서 '==' (비교) 대신 '=' (할당)을 사용했다고 경고해야 합니다.
-     */
-    if (y = 5)
-    {
-        y = 10;
-    }
-
-    /* * [물결무늬 4] bugprone-unused-variable
-     * 변수를 선언만 하고 사용하지 않았다고 경고해야 합니다.
-     */
-    int unused_var = 100;
-}
-/* ================================================= */
