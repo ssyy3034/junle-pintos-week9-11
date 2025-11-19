@@ -11,6 +11,11 @@
 void syscall_entry(void);
 void syscall_handler(struct intr_frame *);
 
+// syscall 함수들 ========
+static void sys_halt(void);                                         // 완료
+static void sys_exit(int status);                                 // 완료
+static int sys_write(int fd, const void *buffer, unsigned length);  //완료
+
 /* System call.
  *
  * Previously system call services was handled by the interrupt handler
@@ -35,46 +40,58 @@ void syscall_init(void) {
 }
 
 /* The main system call interface */
-void syscall_handler(struct intr_frame *f UNUSED) {
-    // TODO: Your implementation goes here.
-    printf("system call!\n");
+void syscall_handler(struct intr_frame *f UNUSED)
+{
+    // 1) syscall 번호 받기 ========
+    uint64_t syscall_no = f->R.rax;
+
+    // 2) syscall 번호별 인자개수만큼 받고 actions 처리 ========
+    switch (syscall_no)
+    {
+        case SYS_HALT:
+
+            sys_halt();
+            break;
+
+        case SYS_EXIT:
+
+            sys_exit(f->R.rdi);
+            break;
+
+        case SYS_WRITE:
+
+            int fd = f->R.rdi;
+            void *buffer = f->R.rsi;
+            unsigned length = f->R.rdx;
+
+            f->R.rax = sys_write(fd, buffer, length);
+            break;
+            
+        default:
+            sys_exit(-1);
+            break;
+    }
+
+    // thread_exit(); ->시스템콜 끝날때마다 무조건 현재 스레드(=프로세스) 종료
+}
+// 시스템콜 함수들 ========================
+static void sys_halt(void)
+{
+    power_off();
+}
+
+static void sys_exit(int status)
+{
+    struct thread *cur = thread_current();
+    cur->exit_code = status;
     thread_exit();
 }
-/*
- * =================================================
- * clang-tidy (정적 분석) 작동 테스트용 함수
- * =================================================
- * 이 함수를 process.c 또는 syscall.c 상단에 잠시 추가해 보세요.
- * VS Code에 물결무늬 경고가 표시되어야 합니다.
- */
-void test_clang_tidy_warnings(void) {
-    int x; // 버그 1: 초기화되지 않은 변수
-    int y = 0;
-    int *ptr = NULL; // 버그 2: NULL 포인터
 
-    /* * [물결무늬 1] clang-analyzer-core.uninitialized.UndefReturn
-     * 'x'가 초기화되지 않은 상태에서 사용될 수 있다고 경고해야 합니다.
-     */
-    if (x > 10) {
-        y = 5;
+static int sys_write(int fd, const void *buffer, unsigned length)
+{
+    if (fd == 1)
+    {
+        putbuf((const char *)buffer, (size_t)length);
     }
-
-    /* * [물결무늬 2] clang-analyzer-core.NullDereference
-     * 'ptr'이 NULL일 수 있는데 역참조한다고 경고해야 합니다.
-     * (Pintos 커널 패닉의 주 원인!)
-     */
-    *ptr = 1;
-
-    /* * [물결무늬 3] bugprone-assignment-in-if-condition
-     * if문 안에서 '==' (비교) 대신 '=' (할당)을 사용했다고 경고해야 합니다.
-     */
-    if (y = 5) {
-        y = 10;
-    }
-
-    /* * [물결무늬 4] bugprone-unused-variable
-     * 변수를 선언만 하고 사용하지 않았다고 경고해야 합니다.
-     */
-    int unused_var = 100;
+    return length;
 }
-/* ================================================= */

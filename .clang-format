@@ -33,7 +33,7 @@ AllowShortLoopsOnASingleLine: false
 AllowShortBlocksOnASingleLine: Never
 AllowShortEnumsOnASingleLine: false
 
-IndentCaseLabels: false
+IndentCaseLabels: true
 IndentGotoLabels: true
 IndentPPDirectives: None
 

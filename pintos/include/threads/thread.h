@@ -97,6 +97,8 @@ struct thread {
     struct list lock_held_list;
     int original_priority;
     struct lock *waiting_lock;
+    
+    int exit_code; // exit()호출되면 남김
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
