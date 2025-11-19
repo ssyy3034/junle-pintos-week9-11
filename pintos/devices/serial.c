@@ -67,7 +67,8 @@ static intr_handler_func serial_interrupt;
    Polling mode busy-waits for the serial port to become free
    before writing to it.  It's slow, but until interrupts have
    been initialized it's all we can do. */
-static void init_poll(void) {
+static void init_poll(void)
+{
     ASSERT(mode == UNINIT);
     outb(IER_REG, 0);        /* Turn off all interrupts. */
     outb(FCR_REG, 0);        /* Disable FIFO. */
@@ -80,7 +81,8 @@ static void init_poll(void) {
 /* Initializes the serial port device for queued interrupt-driven
    I/O.  With interrupt-driven I/O we don't waste CPU time
    waiting for the serial device to become ready. */
-void serial_init_queue(void) {
+void serial_init_queue(void)
+{
     enum intr_level old_level;
 
     if (mode == UNINIT)
@@ -95,19 +97,23 @@ void serial_init_queue(void) {
 }
 
 /* Sends BYTE to the serial port. */
-void serial_putc(uint8_t byte) {
+void serial_putc(uint8_t byte)
+{
     enum intr_level old_level = intr_disable();
 
-    if (mode != QUEUE) {
+    if (mode != QUEUE)
+    {
         /* If we're not set up for interrupt-driven I/O yet,
            use dumb polling to transmit a byte. */
         if (mode == UNINIT)
             init_poll();
         putc_poll(byte);
-    } else {
+    } else
+    {
         /* Otherwise, queue a byte and update the interrupt enable
            register. */
-        if (old_level == INTR_OFF && intq_full(&txq)) {
+        if (old_level == INTR_OFF && intq_full(&txq))
+        {
             /* Interrupts are off and the transmit queue is full.
                If we wanted to wait for the queue to empty,
                we'd have to reenable interrupts.
@@ -125,7 +131,8 @@ void serial_putc(uint8_t byte) {
 
 /* Flushes anything in the serial buffer out the port in polling
    mode. */
-void serial_flush(void) {
+void serial_flush(void)
+{
     enum intr_level old_level = intr_disable();
     while (!intq_empty(&txq))
         putc_poll(intq_getc(&txq));
@@ -136,14 +143,16 @@ void serial_flush(void) {
    whether we should block receive interrupts.
    Called by the input buffer routines when characters are added
    to or removed from the buffer. */
-void serial_notify(void) {
+void serial_notify(void)
+{
     ASSERT(intr_get_level() == INTR_OFF);
     if (mode == QUEUE)
         write_ier();
 }
 
 /* Configures the serial port for BPS bits per second. */
-static void set_serial(int bps) {
+static void set_serial(int bps)
+{
     int base_rate = 1843200 / 16;       /* Base rate of 16550A, in Hz. */
     uint16_t divisor = base_rate / bps; /* Clock rate divisor. */
 
@@ -161,7 +170,8 @@ static void set_serial(int bps) {
 }
 
 /* Update interrupt enable register. */
-static void write_ier(void) {
+static void write_ier(void)
+{
     uint8_t ier = 0;
 
     ASSERT(intr_get_level() == INTR_OFF);
@@ -181,7 +191,8 @@ static void write_ier(void) {
 
 /* Polls the serial port until it's ready,
    and then transmits BYTE. */
-static void putc_poll(uint8_t byte) {
+static void putc_poll(uint8_t byte)
+{
     ASSERT(intr_get_level() == INTR_OFF);
 
     while ((inb(LSR_REG) & LSR_THRE) == 0)
@@ -190,7 +201,8 @@ static void putc_poll(uint8_t byte) {
 }
 
 /* Serial interrupt handler. */
-static void serial_interrupt(struct intr_frame *f UNUSED) {
+static void serial_interrupt(struct intr_frame *f UNUSED)
+{
     /* Inquire about interrupt in UART.  Without this, we can
        occasionally miss an interrupt running under QEMU. */
     inb(IIR_REG);

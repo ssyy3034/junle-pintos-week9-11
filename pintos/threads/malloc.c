@@ -65,10 +65,12 @@ static struct arena *block_to_arena(struct block *);
 static struct block *arena_to_block(struct arena *, size_t idx);
 
 /* Initializes the malloc() descriptors. */
-void malloc_init(void) {
+void malloc_init(void)
+{
     size_t block_size;
 
-    for (block_size = 16; block_size < PGSIZE / 2; block_size *= 2) {
+    for (block_size = 16; block_size < PGSIZE / 2; block_size *= 2)
+    {
         struct desc *d = &descs[desc_cnt++];
         ASSERT(desc_cnt <= sizeof descs / sizeof *descs);
         d->block_size = block_size;
@@ -80,7 +82,8 @@ void malloc_init(void) {
 
 /* Obtains and returns a new block of at least SIZE bytes.
    Returns a null pointer if memory is not available. */
-void *malloc(size_t size) {
+void *malloc(size_t size)
+{
     struct desc *d;
     struct block *b;
     struct arena *a;
@@ -94,7 +97,8 @@ void *malloc(size_t size) {
     for (d = descs; d < descs + desc_cnt; d++)
         if (d->block_size >= size)
             break;
-    if (d == descs + desc_cnt) {
+    if (d == descs + desc_cnt)
+    {
         /* SIZE is too big for any descriptor.
            Allocate enough pages to hold SIZE plus an arena. */
         size_t page_cnt = DIV_ROUND_UP(size + sizeof *a, PGSIZE);
@@ -113,12 +117,14 @@ void *malloc(size_t size) {
     lock_acquire(&d->lock);
 
     /* If the free list is empty, create a new arena. */
-    if (list_empty(&d->free_list)) {
+    if (list_empty(&d->free_list))
+    {
         size_t i;
 
         /* Allocate a page. */
         a = palloc_get_page(0);
-        if (a == NULL) {
+        if (a == NULL)
+        {
             lock_release(&d->lock);
             return NULL;
         }
@@ -127,7 +133,8 @@ void *malloc(size_t size) {
         a->magic = ARENA_MAGIC;
         a->desc = d;
         a->free_cnt = d->blocks_per_arena;
-        for (i = 0; i < d->blocks_per_arena; i++) {
+        for (i = 0; i < d->blocks_per_arena; i++)
+        {
             struct block *b = arena_to_block(a, i);
             list_push_back(&d->free_list, &b->free_elem);
         }
@@ -143,7 +150,8 @@ void *malloc(size_t size) {
 
 /* Allocates and return A times B bytes initialized to zeroes.
    Returns a null pointer if memory is not available. */
-void *calloc(size_t a, size_t b) {
+void *calloc(size_t a, size_t b)
+{
     void *p;
     size_t size;
 
@@ -161,7 +169,8 @@ void *calloc(size_t a, size_t b) {
 }
 
 /* Returns the number of bytes allocated for BLOCK. */
-static size_t block_size(void *block) {
+static size_t block_size(void *block)
+{
     struct block *b = block;
     struct arena *a = block_to_arena(b);
     struct desc *d = a->desc;
@@ -175,13 +184,17 @@ static size_t block_size(void *block) {
    null pointer.
    A call with null OLD_BLOCK is equivalent to malloc(NEW_SIZE).
    A call with zero NEW_SIZE is equivalent to free(OLD_BLOCK). */
-void *realloc(void *old_block, size_t new_size) {
-    if (new_size == 0) {
+void *realloc(void *old_block, size_t new_size)
+{
+    if (new_size == 0)
+    {
         free(old_block);
         return NULL;
-    } else {
+    } else
+    {
         void *new_block = malloc(new_size);
-        if (old_block != NULL && new_block != NULL) {
+        if (old_block != NULL && new_block != NULL)
+        {
             size_t old_size = block_size(old_block);
             size_t min_size = new_size < old_size ? new_size : old_size;
             memcpy(new_block, old_block, min_size);
@@ -193,13 +206,16 @@ void *realloc(void *old_block, size_t new_size) {
 
 /* Frees block P, which must have been previously allocated with
    malloc(), calloc(), or realloc(). */
-void free(void *p) {
-    if (p != NULL) {
+void free(void *p)
+{
+    if (p != NULL)
+    {
         struct block *b = p;
         struct arena *a = block_to_arena(b);
         struct desc *d = a->desc;
 
-        if (d != NULL) {
+        if (d != NULL)
+        {
             /* It's a normal block.  We handle it here. */
 
 #ifndef NDEBUG
@@ -213,11 +229,13 @@ void free(void *p) {
             list_push_front(&d->free_list, &b->free_elem);
 
             /* If the arena is now entirely unused, free it. */
-            if (++a->free_cnt >= d->blocks_per_arena) {
+            if (++a->free_cnt >= d->blocks_per_arena)
+            {
                 size_t i;
 
                 ASSERT(a->free_cnt == d->blocks_per_arena);
-                for (i = 0; i < d->blocks_per_arena; i++) {
+                for (i = 0; i < d->blocks_per_arena; i++)
+                {
                     struct block *b = arena_to_block(a, i);
                     list_remove(&b->free_elem);
                 }
@@ -225,7 +243,8 @@ void free(void *p) {
             }
 
             lock_release(&d->lock);
-        } else {
+        } else
+        {
             /* It's a big block.  Free its pages. */
             palloc_free_multiple(a, a->free_cnt);
             return;
@@ -234,7 +253,8 @@ void free(void *p) {
 }
 
 /* Returns the arena that block B is inside. */
-static struct arena *block_to_arena(struct block *b) {
+static struct arena *block_to_arena(struct block *b)
+{
     struct arena *a = pg_round_down(b);
 
     /* Check that the arena is valid. */
@@ -249,7 +269,8 @@ static struct arena *block_to_arena(struct block *b) {
 }
 
 /* Returns the (IDX - 1)'th block within arena A. */
-static struct block *arena_to_block(struct arena *a, size_t idx) {
+static struct block *arena_to_block(struct arena *a, size_t idx)
+{
     ASSERT(a != NULL);
     ASSERT(a->magic == ARENA_MAGIC);
     ASSERT(idx < a->desc->blocks_per_arena);

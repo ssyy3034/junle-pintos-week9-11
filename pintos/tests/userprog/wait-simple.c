@@ -4,11 +4,14 @@
 #include "tests/lib.h"
 #include "tests/main.h"
 
-void test_main(void) {
+void test_main(void)
+{
     int pid;
-    if ((pid = fork("child-simple"))) {
+    if ((pid = fork("child-simple")))
+    {
         msg("wait(exec()) = %d", wait(pid));
-    } else {
+    } else
+    {
         exec("child-simple");
     }
 }

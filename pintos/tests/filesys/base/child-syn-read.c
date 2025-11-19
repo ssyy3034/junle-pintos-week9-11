@@ -13,7 +13,8 @@
 
 static char buf[BUF_SIZE];
 
-int main(int argc, const char *argv[]) {
+int main(int argc, const char *argv[])
+{
     test_name = "child-syn-read";
 
     int child_idx;
@@ -29,7 +30,8 @@ int main(int argc, const char *argv[]) {
     random_bytes(buf, sizeof buf);
 
     CHECK((fd = open(file_name)) > 1, "open \"%s\"", file_name);
-    for (i = 0; i < sizeof buf; i++) {
+    for (i = 0; i < sizeof buf; i++)
+    {
         char c;
         CHECK(read(fd, &c, 1) > 0, "read \"%s\"", file_name);
         compare_bytes(&c, buf + i, 1, i, file_name);

@@ -2,7 +2,8 @@
 #include "tests/lib.h"
 #include "tests/main.h"
 
-void test_main(void) {
+void test_main(void)
+{
     CHECK(mkdir("/a"), "mkdir \"/a\"");
     CHECK(mount("a", 1, 0) == 0, "mount the second disk at \"/a\"");
     CHECK(chdir("a"), "chdir \"/a\"");

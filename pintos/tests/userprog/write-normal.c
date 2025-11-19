@@ -5,7 +5,8 @@
 #include "tests/lib.h"
 #include "tests/main.h"
 
-void test_main(void) {
+void test_main(void)
+{
     int handle, byte_cnt;
 
     CHECK(create("test.txt", sizeof sample - 1), "create \"test.txt\"");

@@ -12,7 +12,8 @@
 #define PAGE_SHIFT 12
 #define PAGE_ALIGN_CEIL(x) ((x % PAGE_SIZE ? (x + PAGE_SIZE) : x) >> PAGE_SHIFT << PAGE_SHIFT)
 
-void test_main(void) {
+void test_main(void)
+{
     size_t handle;
     size_t small_size;
     char *actual = (char *)0x10000000;
@@ -30,22 +31,27 @@ void test_main(void) {
     page_cnt = PAGE_ALIGN_CEIL(small_size) / PAGE_SIZE;
 
     msg("initial pages status");
-    for (i = 0; i < page_cnt; i++) {
+    for (i = 0; i < page_cnt; i++)
+    {
         // All pages for the file should not be loaded yet.
         pa = get_phys_addr(&actual[i * PAGE_SIZE]);
         CHECK(pa == 0, "check if page is not loaded");
     }
     msg("load pages (%zu)", page_cnt);
-    for (i = 0; i < page_cnt; i++) {
+    for (i = 0; i < page_cnt; i++)
+    {
         msg("load page [%zu]", i);
         if (memcmp(actual + i * PAGE_SIZE, small + i * PAGE_SIZE, 10))
             fail("read of mmap'd file reported bad data");
-        for (j = 0; j < page_cnt; j++) {
+        for (j = 0; j < page_cnt; j++)
+        {
             pa = get_phys_addr(&actual[j * PAGE_SIZE]);
-            if (j <= i) {
+            if (j <= i)
+            {
                 // Pages that have been accessed should be loaded
                 CHECK(pa != 0, "check if page is loaded");
-            } else {
+            } else
+            {
                 // Pages that have not been accessed should not be loaded.
                 CHECK(pa == 0, "check if page is not loaded");
             }

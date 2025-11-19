@@ -57,7 +57,8 @@ struct segment_descriptor64 {
 };
 
 #define SEG64(type, base, lim, dpl)                                                                                    \
-    (struct segment_desc) {                                                                                            \
+    (struct segment_desc)                                                                                              \
+    {                                                                                                                  \
         ((lim) >> 12) & 0xffff, (base)&0xffff, ((base) >> 16) & 0xff, type, 1, dpl, 1, (unsigned)(lim) >> 28, 0, 1, 0, \
             1, (unsigned)(base) >> 24                                                                                  \
     }
@@ -77,7 +78,8 @@ struct desc_ptr gdt_ds = {.size = sizeof(gdt) - 1, .address = (uint64_t)gdt};
 
 /* Sets up a proper GDT.  The bootstrap loader's GDT didn't
    include user-mode selectors or a TSS, but we need both now. */
-void gdt_init(void) {
+void gdt_init(void)
+{
     /* Initialize GDT. */
     struct segment_descriptor64 *tss_desc = (struct segment_descriptor64 *)&gdt[SEL_TSS >> 3];
     struct task_state *tss = tss_get();

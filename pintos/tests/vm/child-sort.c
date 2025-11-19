@@ -10,7 +10,8 @@
 unsigned char buf[128 * 1024];
 size_t histogram[256];
 
-int main(int argc UNUSED, char *argv[]) {
+int main(int argc UNUSED, char *argv[])
+{
     test_name = "child-sort";
 
     int handle;
@@ -26,7 +27,8 @@ int main(int argc UNUSED, char *argv[]) {
     for (i = 0; i < size; i++)
         histogram[buf[i]]++;
     p = buf;
-    for (i = 0; i < sizeof histogram / sizeof *histogram; i++) {
+    for (i = 0; i < sizeof histogram / sizeof *histogram; i++)
+    {
         size_t j = histogram[i];
         while (j-- > 0)
             *p++ = i;

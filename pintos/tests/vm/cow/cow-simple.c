@@ -10,7 +10,8 @@
 
 #define CHUNK_SIZE (128 * 1024)
 
-void test_main(void) {
+void test_main(void)
+{
     pid_t child;
     void *pa_parent;
     void *pa_child;
@@ -20,7 +21,8 @@ void test_main(void) {
     pa_parent = get_phys_addr((void *)large);
 
     child = fork("child");
-    if (child == 0) {
+    if (child == 0)
+    {
         CHECK(memcmp(buf, large, strlen(buf)) == 0, "check data consistency");
 
         pa_child = get_phys_addr((void *)large);

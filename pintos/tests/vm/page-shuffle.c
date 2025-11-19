@@ -11,7 +11,8 @@
 
 static char buf[SIZE];
 
-void test_main(void) {
+void test_main(void)
+{
     size_t i;
 
     /* Initialize. */
@@ -20,7 +21,8 @@ void test_main(void) {
     msg("init: cksum=%lu", cksum(buf, sizeof buf));
 
     /* Shuffle repeatedly. */
-    for (i = 0; i < 10; i++) {
+    for (i = 0; i < 10; i++)
+    {
         shuffle(buf, sizeof buf, 1);
         msg("shuffle %zu: cksum=%lu", i, cksum(buf, sizeof buf));
     }

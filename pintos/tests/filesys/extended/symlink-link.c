@@ -12,8 +12,10 @@ static char buf_a[FILE_SIZE];
 #define DISK_SIZE (2 << 20) // 2MB
 #define MAX_FILE_NR (DISK_SIZE / FILE_SIZE)
 
-static void write_some_bytes(const char *file_name, int fd, const char *buf, size_t *ofs) {
-    if (*ofs < FILE_SIZE) {
+static void write_some_bytes(const char *file_name, int fd, const char *buf, size_t *ofs)
+{
+    if (*ofs < FILE_SIZE)
+    {
         size_t block_size = random_ulong() % (FILE_SIZE / 8) + 1;
         size_t ret_val;
         if (block_size > FILE_SIZE - *ofs)
@@ -26,7 +28,8 @@ static void write_some_bytes(const char *file_name, int fd, const char *buf, siz
     }
 }
 
-void test_main(void) {
+void test_main(void)
+{
     int fd;
     size_t ofs = 0;
 
@@ -41,7 +44,8 @@ void test_main(void) {
     CHECK((fd = open("link_c")) > 1, "open \"link_c\"");
 
     msg("write \"link_c\"");
-    while (ofs < FILE_SIZE) {
+    while (ofs < FILE_SIZE)
+    {
         write_some_bytes("link_c", fd, buf_a, &ofs);
     }
 

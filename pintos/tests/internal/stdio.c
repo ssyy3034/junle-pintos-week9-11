@@ -19,7 +19,8 @@
 /* Number of failures so far. */
 static int failure_cnt;
 
-static void checkf(const char *expect, const char *format, ...) {
+static void checkf(const char *expect, const char *format, ...)
+{
     char output[128];
     va_list args;
 
@@ -29,7 +30,8 @@ static void checkf(const char *expect, const char *format, ...) {
     vsnprintf(output, sizeof output, format, args);
     va_end(args);
 
-    if (strcmp(expect, output)) {
+    if (strcmp(expect, output))
+    {
         printf("\nFAIL: actual output \"%s\"\n", output);
         failure_cnt++;
     } else
@@ -37,7 +39,8 @@ static void checkf(const char *expect, const char *format, ...) {
 }
 
 /* Test printf() implementation. */
-void test(void) {
+void test(void)
+{
     printf("Testing formats:");
 
     /* Check that commas show up in the right places, for positive

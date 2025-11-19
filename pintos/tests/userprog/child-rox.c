@@ -10,7 +10,8 @@
 #include <syscall.h>
 #include "tests/lib.h"
 
-static void try_write(void) {
+static void try_write(void)
+{
     int handle;
     char buffer[19];
 
@@ -23,7 +24,8 @@ static void try_write(void) {
     close(handle);
 }
 
-int main(int argc UNUSED, char *argv[]) {
+int main(int argc UNUSED, char *argv[])
+{
     test_name = "child-rox";
 
     msg("begin");
@@ -31,13 +33,15 @@ int main(int argc UNUSED, char *argv[]) {
 
     if (!isdigit(*argv[1]))
         fail("bad command-line arguments");
-    if (atoi(argv[1]) > 1) {
+    if (atoi(argv[1]) > 1)
+    {
         char cmd[128];
         int child;
 
         snprintf(cmd, sizeof cmd, "child-rox %d", atoi(argv[1]) - 1);
         msg("exec \"%s\"", cmd);
-        if (!(child = fork("child-rox"))) {
+        if (!(child = fork("child-rox")))
+        {
             exec(cmd);
         }
 

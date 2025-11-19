@@ -21,19 +21,23 @@ struct dir_entry {
 
 /* Creates a directory with space for ENTRY_CNT entries in the
  * given SECTOR.  Returns true if successful, false on failure. */
-bool dir_create(disk_sector_t sector, size_t entry_cnt) {
+bool dir_create(disk_sector_t sector, size_t entry_cnt)
+{
     return inode_create(sector, entry_cnt * sizeof(struct dir_entry));
 }
 
 /* Opens and returns the directory for the given INODE, of which
  * it takes ownership.  Returns a null pointer on failure. */
-struct dir *dir_open(struct inode *inode) {
+struct dir *dir_open(struct inode *inode)
+{
     struct dir *dir = calloc(1, sizeof *dir);
-    if (inode != NULL && dir != NULL) {
+    if (inode != NULL && dir != NULL)
+    {
         dir->inode = inode;
         dir->pos = 0;
         return dir;
-    } else {
+    } else
+    {
         inode_close(inode);
         free(dir);
         return NULL;
@@ -42,26 +46,31 @@ struct dir *dir_open(struct inode *inode) {
 
 /* Opens the root directory and returns a directory for it.
  * Return true if successful, false on failure. */
-struct dir *dir_open_root(void) {
+struct dir *dir_open_root(void)
+{
     return dir_open(inode_open(ROOT_DIR_SECTOR));
 }
 
 /* Opens and returns a new directory for the same inode as DIR.
  * Returns a null pointer on failure. */
-struct dir *dir_reopen(struct dir *dir) {
+struct dir *dir_reopen(struct dir *dir)
+{
     return dir_open(inode_reopen(dir->inode));
 }
 
 /* Destroys DIR and frees associated resources. */
-void dir_close(struct dir *dir) {
-    if (dir != NULL) {
+void dir_close(struct dir *dir)
+{
+    if (dir != NULL)
+    {
         inode_close(dir->inode);
         free(dir);
     }
 }
 
 /* Returns the inode encapsulated by DIR. */
-struct inode *dir_get_inode(struct dir *dir) {
+struct inode *dir_get_inode(struct dir *dir)
+{
     return dir->inode;
 }
 
@@ -70,7 +79,8 @@ struct inode *dir_get_inode(struct dir *dir) {
  * if EP is non-null, and sets *OFSP to the byte offset of the
  * directory entry if OFSP is non-null.
  * otherwise, returns false and ignores EP and OFSP. */
-static bool lookup(const struct dir *dir, const char *name, struct dir_entry *ep, off_t *ofsp) {
+static bool lookup(const struct dir *dir, const char *name, struct dir_entry *ep, off_t *ofsp)
+{
     struct dir_entry e;
     size_t ofs;
 
@@ -78,7 +88,8 @@ static bool lookup(const struct dir *dir, const char *name, struct dir_entry *ep
     ASSERT(name != NULL);
 
     for (ofs = 0; inode_read_at(dir->inode, &e, sizeof e, ofs) == sizeof e; ofs += sizeof e)
-        if (e.in_use && !strcmp(name, e.name)) {
+        if (e.in_use && !strcmp(name, e.name))
+        {
             if (ep != NULL)
                 *ep = e;
             if (ofsp != NULL)
@@ -92,7 +103,8 @@ static bool lookup(const struct dir *dir, const char *name, struct dir_entry *ep
  * and returns true if one exists, false otherwise.
  * On success, sets *INODE to an inode for the file, otherwise to
  * a null pointer.  The caller must close *INODE. */
-bool dir_lookup(const struct dir *dir, const char *name, struct inode **inode) {
+bool dir_lookup(const struct dir *dir, const char *name, struct inode **inode)
+{
     struct dir_entry e;
 
     ASSERT(dir != NULL);
@@ -112,7 +124,8 @@ bool dir_lookup(const struct dir *dir, const char *name, struct inode **inode) {
  * Returns true if successful, false on failure.
  * Fails if NAME is invalid (i.e. too long) or a disk or memory
  * error occurs. */
-bool dir_add(struct dir *dir, const char *name, disk_sector_t inode_sector) {
+bool dir_add(struct dir *dir, const char *name, disk_sector_t inode_sector)
+{
     struct dir_entry e;
     off_t ofs;
     bool success = false;
@@ -152,7 +165,8 @@ done:
 /* Removes any entry for NAME in DIR.
  * Returns true if successful, false on failure,
  * which occurs only if there is no file with the given NAME. */
-bool dir_remove(struct dir *dir, const char *name) {
+bool dir_remove(struct dir *dir, const char *name)
+{
     struct dir_entry e;
     struct inode *inode = NULL;
     bool success = false;
@@ -187,12 +201,15 @@ done:
 /* Reads the next directory entry in DIR and stores the name in
  * NAME.  Returns true if successful, false if the directory
  * contains no more entries. */
-bool dir_readdir(struct dir *dir, char name[NAME_MAX + 1]) {
+bool dir_readdir(struct dir *dir, char name[NAME_MAX + 1])
+{
     struct dir_entry e;
 
-    while (inode_read_at(dir->inode, &e, sizeof e, dir->pos) == sizeof e) {
+    while (inode_read_at(dir->inode, &e, sizeof e, dir->pos) == sizeof e)
+    {
         dir->pos += sizeof e;
-        if (e.in_use) {
+        if (e.in_use)
+        {
             strlcpy(name, e.name, NAME_MAX + 1);
             return true;
         }

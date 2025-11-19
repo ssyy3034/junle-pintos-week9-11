@@ -12,7 +12,8 @@
 #include "threads/vaddr.h"
 
 /* List files in the root directory. */
-void fsutil_ls(char **argv UNUSED) {
+void fsutil_ls(char **argv UNUSED)
+{
     struct dir *dir;
     char name[NAME_MAX + 1];
 
@@ -27,7 +28,8 @@ void fsutil_ls(char **argv UNUSED) {
 
 /* Prints the contents of file ARGV[1] to the system console as
  * hex and ASCII. */
-void fsutil_cat(char **argv) {
+void fsutil_cat(char **argv)
+{
     const char *file_name = argv[1];
 
     struct file *file;
@@ -38,7 +40,8 @@ void fsutil_cat(char **argv) {
     if (file == NULL)
         PANIC("%s: open failed", file_name);
     buffer = palloc_get_page(PAL_ASSERT);
-    for (;;) {
+    for (;;)
+    {
         off_t pos = file_tell(file);
         off_t n = file_read(file, buffer, PGSIZE);
         if (n == 0)
@@ -51,7 +54,8 @@ void fsutil_cat(char **argv) {
 }
 
 /* Deletes file ARGV[1]. */
-void fsutil_rm(char **argv) {
+void fsutil_rm(char **argv)
+{
     const char *file_name = argv[1];
 
     printf("Deleting '%s'...\n", file_name);
@@ -71,7 +75,8 @@ void fsutil_rm(char **argv) {
  * beginning of the scratch disk.  Later calls advance across the
  * disk.  This disk position is independent of that used for
  * fsutil_get(), so all `put's should precede all `get's. */
-void fsutil_put(char **argv) {
+void fsutil_put(char **argv)
+{
     static disk_sector_t sector = 0;
 
     const char *file_name = argv[1];
@@ -108,7 +113,8 @@ void fsutil_put(char **argv) {
         PANIC("%s: open failed", file_name);
 
     /* Do copy. */
-    while (size > 0) {
+    while (size > 0)
+    {
         int chunk_size = size > DISK_SECTOR_SIZE ? DISK_SECTOR_SIZE : size;
         disk_read(src, sector++, buffer);
         if (file_write(dst, buffer, chunk_size) != chunk_size)
@@ -132,7 +138,8 @@ void fsutil_put(char **argv) {
  * beginning of the scratch disk.  Later calls advance across the
  * disk.  This disk position is independent of that used for
  * fsutil_put(), so all `put's should precede all `get's. */
-void fsutil_get(char **argv) {
+void fsutil_get(char **argv)
+{
     static disk_sector_t sector = 0;
 
     const char *file_name = argv[1];
@@ -166,7 +173,8 @@ void fsutil_get(char **argv) {
     disk_write(dst, sector++, buffer);
 
     /* Do copy. */
-    while (size > 0) {
+    while (size > 0)
+    {
         int chunk_size = size > DISK_SECTOR_SIZE ? DISK_SECTOR_SIZE : size;
         if (sector >= disk_size(dst))
             PANIC("%s: out of space on scratch disk", file_name);

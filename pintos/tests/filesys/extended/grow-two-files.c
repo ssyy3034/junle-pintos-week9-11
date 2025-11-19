@@ -10,8 +10,10 @@
 static char buf_a[FILE_SIZE];
 static char buf_b[FILE_SIZE];
 
-static void write_some_bytes(const char *file_name, int fd, const char *buf, size_t *ofs) {
-    if (*ofs < FILE_SIZE) {
+static void write_some_bytes(const char *file_name, int fd, const char *buf, size_t *ofs)
+{
+    if (*ofs < FILE_SIZE)
+    {
         size_t block_size = random_ulong() % (FILE_SIZE / 8) + 1;
         size_t ret_val;
         if (block_size > FILE_SIZE - *ofs)
@@ -24,7 +26,8 @@ static void write_some_bytes(const char *file_name, int fd, const char *buf, siz
     }
 }
 
-void test_main(void) {
+void test_main(void)
+{
     int fd_a, fd_b;
     size_t ofs_a = 0, ofs_b = 0;
 
@@ -39,7 +42,8 @@ void test_main(void) {
     CHECK((fd_b = open("b")) > 1, "open \"b\"");
 
     msg("write \"a\" and \"b\" alternately");
-    while (ofs_a < FILE_SIZE || ofs_b < FILE_SIZE) {
+    while (ofs_a < FILE_SIZE || ofs_b < FILE_SIZE)
+    {
         write_some_bytes("a", fd_a, buf_a, &ofs_a);
         write_some_bytes("b", fd_b, buf_b, &ofs_b);
     }

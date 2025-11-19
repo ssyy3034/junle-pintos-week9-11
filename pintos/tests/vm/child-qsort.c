@@ -9,7 +9,8 @@
 #include "tests/main.h"
 #include "tests/vm/qsort.h"
 
-int main(int argc UNUSED, char *argv[]) {
+int main(int argc UNUSED, char *argv[])
+{
     test_name = "child-qsort";
 
     int handle;

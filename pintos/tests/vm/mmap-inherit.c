@@ -7,7 +7,8 @@
 #include "tests/lib.h"
 #include "tests/main.h"
 
-void test_main(void) {
+void test_main(void)
+{
     char *actual = (char *)0x54321000;
     int handle;
     pid_t child;
@@ -20,9 +21,11 @@ void test_main(void) {
 
     /* Spawn child and wait. */
     child = fork("child-inherit");
-    if (child == 0) {
+    if (child == 0)
+    {
         CHECK(exec("child-inherit") != -1, "exec \"child-inherit\"");
-    } else {
+    } else
+    {
         quiet = true;
         CHECK(wait(child) == -1, "wait for child (should return -1)");
         quiet = false;

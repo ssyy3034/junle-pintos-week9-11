@@ -10,7 +10,8 @@
 char buf1[1234];
 char buf2[1234];
 
-void test_main(void) {
+void test_main(void)
+{
     const char *file_name = "deleteme";
     int fd;
 

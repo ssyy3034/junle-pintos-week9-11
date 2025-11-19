@@ -40,7 +40,8 @@ struct lock_pair {
 static thread_func donor_thread_func;
 static thread_func interloper_thread_func;
 
-void test_priority_donate_chain(void) {
+void test_priority_donate_chain(void)
+{
     int i;
     struct lock locks[NESTING_DEPTH - 1];
     struct lock_pair lock_pairs[NESTING_DEPTH];
@@ -56,7 +57,8 @@ void test_priority_donate_chain(void) {
     lock_acquire(&locks[0]);
     msg("%s got lock.", thread_name());
 
-    for (i = 1; i < NESTING_DEPTH; i++) {
+    for (i = 1; i < NESTING_DEPTH; i++)
+    {
         char name[16];
         int thread_priority;
 
@@ -76,7 +78,8 @@ void test_priority_donate_chain(void) {
     msg("%s finishing with priority %d.", thread_name(), thread_get_priority());
 }
 
-static void donor_thread_func(void *locks_) {
+static void donor_thread_func(void *locks_)
+{
     struct lock_pair *locks = locks_;
 
     if (locks->first)
@@ -95,7 +98,8 @@ static void donor_thread_func(void *locks_) {
     msg("%s finishing with priority %d.", thread_name(), thread_get_priority());
 }
 
-static void interloper_thread_func(void *arg_ UNUSED) {
+static void interloper_thread_func(void *arg_ UNUSED)
+{
     msg("%s finished.", thread_name());
 }
 

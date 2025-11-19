@@ -16,12 +16,14 @@
 
 static char big_chunks[CHUNK_SIZE];
 
-void test_main(void) {
+void test_main(void)
+{
     size_t i, handle;
     char *actual = (char *)0x10000000;
     void *map;
 
-    for (i = 0; i < PAGE_COUNT; i++) {
+    for (i = 0; i < PAGE_COUNT; i++)
+    {
         if ((i & 0x1ff) == 0)
             msg("write sparsely over page %zu", i);
         big_chunks[i * PAGE_SIZE] = (char)i;
@@ -35,7 +37,8 @@ void test_main(void) {
         fail("read of mmap'd file reported bad data");
 
     /* Read in anon page */
-    for (i = 0; i < PAGE_COUNT; i++) {
+    for (i = 0; i < PAGE_COUNT; i++)
+    {
         if (big_chunks[i * PAGE_SIZE] != (char)i)
             fail("data is inconsistent");
         if ((i & 0x1ff) == 0)

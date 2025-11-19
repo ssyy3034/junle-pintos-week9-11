@@ -31,7 +31,8 @@ static struct fat_fs *fat_fs;
 void fat_boot_create(void);
 void fat_fs_init(void);
 
-void fat_init(void) {
+void fat_init(void)
+{
     fat_fs = calloc(1, sizeof(struct fat_fs));
     if (fat_fs == NULL)
         PANIC("FAT init failed");
@@ -50,7 +51,8 @@ void fat_init(void) {
     fat_fs_init();
 }
 
-void fat_open(void) {
+void fat_open(void)
+{
     fat_fs->fat = calloc(fat_fs->fat_length, sizeof(cluster_t));
     if (fat_fs->fat == NULL)
         PANIC("FAT load failed");
@@ -60,12 +62,15 @@ void fat_open(void) {
     off_t bytes_read = 0;
     off_t bytes_left = sizeof(fat_fs->fat);
     const off_t fat_size_in_bytes = fat_fs->fat_length * sizeof(cluster_t);
-    for (unsigned i = 0; i < fat_fs->bs.fat_sectors; i++) {
+    for (unsigned i = 0; i < fat_fs->bs.fat_sectors; i++)
+    {
         bytes_left = fat_size_in_bytes - bytes_read;
-        if (bytes_left >= DISK_SECTOR_SIZE) {
+        if (bytes_left >= DISK_SECTOR_SIZE)
+        {
             disk_read(filesys_disk, fat_fs->bs.fat_start + i, buffer + bytes_read);
             bytes_read += DISK_SECTOR_SIZE;
-        } else {
+        } else
+        {
             uint8_t *bounce = malloc(DISK_SECTOR_SIZE);
             if (bounce == NULL)
                 PANIC("FAT load failed");
@@ -77,7 +82,8 @@ void fat_open(void) {
     }
 }
 
-void fat_close(void) {
+void fat_close(void)
+{
     // Write FAT boot sector
     uint8_t *bounce = calloc(1, DISK_SECTOR_SIZE);
     if (bounce == NULL)
@@ -91,12 +97,15 @@ void fat_close(void) {
     off_t bytes_wrote = 0;
     off_t bytes_left = sizeof(fat_fs->fat);
     const off_t fat_size_in_bytes = fat_fs->fat_length * sizeof(cluster_t);
-    for (unsigned i = 0; i < fat_fs->bs.fat_sectors; i++) {
+    for (unsigned i = 0; i < fat_fs->bs.fat_sectors; i++)
+    {
         bytes_left = fat_size_in_bytes - bytes_wrote;
-        if (bytes_left >= DISK_SECTOR_SIZE) {
+        if (bytes_left >= DISK_SECTOR_SIZE)
+        {
             disk_write(filesys_disk, fat_fs->bs.fat_start + i, buffer + bytes_wrote);
             bytes_wrote += DISK_SECTOR_SIZE;
-        } else {
+        } else
+        {
             bounce = calloc(1, DISK_SECTOR_SIZE);
             if (bounce == NULL)
                 PANIC("FAT close failed");
@@ -108,7 +117,8 @@ void fat_close(void) {
     }
 }
 
-void fat_create(void) {
+void fat_create(void)
+{
     // Create FAT boot
     fat_boot_create();
     fat_fs_init();
@@ -129,7 +139,8 @@ void fat_create(void) {
     free(buf);
 }
 
-void fat_boot_create(void) {
+void fat_boot_create(void)
+{
     unsigned int fat_sectors =
         (disk_size(filesys_disk) - 1) / (DISK_SECTOR_SIZE / sizeof(cluster_t) * SECTORS_PER_CLUSTER + 1) + 1;
     fat_fs->bs = (struct fat_boot){
@@ -142,7 +153,8 @@ void fat_boot_create(void) {
     };
 }
 
-void fat_fs_init(void) {
+void fat_fs_init(void)
+{
     /* TODO: Your code goes here. */
 }
 
@@ -153,27 +165,32 @@ void fat_fs_init(void) {
 /* Add a cluster to the chain.
  * If CLST is 0, start a new chain.
  * Returns 0 if fails to allocate a new cluster. */
-cluster_t fat_create_chain(cluster_t clst) {
+cluster_t fat_create_chain(cluster_t clst)
+{
     /* TODO: Your code goes here. */
 }
 
 /* Remove the chain of clusters starting from CLST.
  * If PCLST is 0, assume CLST as the start of the chain. */
-void fat_remove_chain(cluster_t clst, cluster_t pclst) {
+void fat_remove_chain(cluster_t clst, cluster_t pclst)
+{
     /* TODO: Your code goes here. */
 }
 
 /* Update a value in the FAT table. */
-void fat_put(cluster_t clst, cluster_t val) {
+void fat_put(cluster_t clst, cluster_t val)
+{
     /* TODO: Your code goes here. */
 }
 
 /* Fetch a value in the FAT table. */
-cluster_t fat_get(cluster_t clst) {
+cluster_t fat_get(cluster_t clst)
+{
     /* TODO: Your code goes here. */
 }
 
 /* Covert a cluster # to a sector number. */
-disk_sector_t cluster_to_sector(cluster_t clst) {
+disk_sector_t cluster_to_sector(cluster_t clst)
+{
     /* TODO: Your code goes here. */
 }

@@ -12,11 +12,13 @@
 
 static void test_sleep(int thread_cnt, int iterations);
 
-void test_alarm_single(void) {
+void test_alarm_single(void)
+{
     test_sleep(5, 1);
 }
 
-void test_alarm_multiple(void) {
+void test_alarm_multiple(void)
+{
     test_sleep(5, 7);
 }
 
@@ -41,7 +43,8 @@ struct sleep_thread {
 static void sleeper(void *);
 
 /* Runs THREAD_CNT threads thread sleep ITERATIONS times each. */
-static void test_sleep(int thread_cnt, int iterations) {
+static void test_sleep(int thread_cnt, int iterations)
+{
     struct sleep_test test;
     struct sleep_thread *threads;
     int *output, *op;
@@ -71,7 +74,8 @@ static void test_sleep(int thread_cnt, int iterations) {
 
     /* Start threads. */
     ASSERT(output != NULL);
-    for (i = 0; i < thread_cnt; i++) {
+    for (i = 0; i < thread_cnt; i++)
+    {
         struct sleep_thread *t = threads + i;
         char name[16];
 
@@ -93,7 +97,8 @@ static void test_sleep(int thread_cnt, int iterations) {
 
     /* Print completion order. */
     product = 0;
-    for (op = output; op < test.output_pos; op++) {
+    for (op = output; op < test.output_pos; op++)
+    {
         struct sleep_thread *t;
         int new_prod;
 
@@ -121,12 +126,14 @@ static void test_sleep(int thread_cnt, int iterations) {
 }
 
 /* Sleeper thread. */
-static void sleeper(void *t_) {
+static void sleeper(void *t_)
+{
     struct sleep_thread *t = t_;
     struct sleep_test *test = t->test;
     int i;
 
-    for (i = 1; i <= test->iterations; i++) {
+    for (i = 1; i <= test->iterations; i++)
+    {
         int64_t sleep_until = test->start + i * t->duration;
         timer_sleep(sleep_until - timer_ticks());
         lock_acquire(&test->output_lock);

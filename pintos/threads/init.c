@@ -64,7 +64,8 @@ static void print_stats(void);
 int main(void) NO_RETURN;
 
 /* Pintos main program. */
-int main(void) {
+int main(void)
+{
     uint64_t mem_end;
     char **argv;
 
@@ -126,7 +127,8 @@ int main(void) {
 }
 
 /* Clear BSS */
-static void bss_init(void) {
+static void bss_init(void)
+{
     /* The "BSS" is a segment that should be initialized to zeros.
        It isn't actually stored on disk or zeroed by the kernel
        loader, so we have to zero it ourselves.
@@ -140,7 +142,8 @@ static void bss_init(void) {
 /* Populates the page table with the kernel virtual mapping,
  * and then sets up the CPU to use the new page directory.
  * Points base_pml4 to the pml4 it creates. */
-static void paging_init(uint64_t mem_end) {
+static void paging_init(uint64_t mem_end)
+{
     uint64_t *pml4, *pte;
     int perm;
     pml4 = base_pml4 = palloc_get_page(PAL_ASSERT | PAL_ZERO);
@@ -148,7 +151,8 @@ static void paging_init(uint64_t mem_end) {
     extern char start, _end_kernel_text;
     // Maps physical address [0 ~ mem_end] to
     //   [LOADER_KERN_BASE ~ LOADER_KERN_BASE + mem_end].
-    for (uint64_t pa = 0; pa < mem_end; pa += PGSIZE) {
+    for (uint64_t pa = 0; pa < mem_end; pa += PGSIZE)
+    {
         uint64_t va = (uint64_t)ptov(pa);
 
         perm = PTE_P | PTE_W;
@@ -165,7 +169,8 @@ static void paging_init(uint64_t mem_end) {
 
 /* Breaks the kernel command line into words and returns them as
    an argv-like array. */
-static char **read_command_line(void) {
+static char **read_command_line(void)
+{
     static char *argv[LOADER_ARGS_LEN / 2 + 1];
     char *p, *end;
     int argc;
@@ -174,7 +179,8 @@ static char **read_command_line(void) {
     argc = *(uint32_t *)ptov(LOADER_ARG_CNT);
     p = ptov(LOADER_ARGS);
     end = p + LOADER_ARGS_LEN;
-    for (i = 0; i < argc; i++) {
+    for (i = 0; i < argc; i++)
+    {
         if (p >= end)
             PANIC("command line arguments overflow");
 
@@ -197,8 +203,10 @@ static char **read_command_line(void) {
 
 /* Parses options in ARGV[]
    and returns the first non-option argument. */
-static char **parse_options(char **argv) {
-    for (; *argv != NULL && **argv == '-'; argv++) {
+static char **parse_options(char **argv)
+{
+    for (; *argv != NULL && **argv == '-'; argv++)
+    {
         char *save_ptr;
         char *name = strtok_r(*argv, "=", &save_ptr);
         char *value = strtok_r(NULL, "", &save_ptr);
@@ -229,14 +237,17 @@ static char **parse_options(char **argv) {
 }
 
 /* Runs the task specified in ARGV[1]. */
-static void run_task(char **argv) {
+static void run_task(char **argv)
+{
     const char *task = argv[1];
 
     printf("Executing '%s':\n", task);
 #ifdef USERPROG
-    if (thread_tests) {
+    if (thread_tests)
+    {
         run_test(task);
-    } else {
+    } else
+    {
         process_wait(process_create_initd(task));
     }
 #else
@@ -247,7 +258,8 @@ static void run_task(char **argv) {
 
 /* Executes all of the actions specified in ARGV[]
    up to the null pointer sentinel. */
-static void run_actions(char **argv) {
+static void run_actions(char **argv)
+{
     /* An action. */
     struct action {
         char *name;                    /* Action name. */
@@ -265,7 +277,8 @@ static void run_actions(char **argv) {
         {NULL, 0, NULL},
     };
 
-    while (*argv != NULL) {
+    while (*argv != NULL)
+    {
         const struct action *a;
         int i;
 
@@ -289,7 +302,8 @@ static void run_actions(char **argv) {
 
 /* Prints a kernel command line help message and powers off the
    machine. */
-static void usage(void) {
+static void usage(void)
+{
     printf("\nCommand line syntax: [OPTION...] [ACTION...]\n"
            "Options must precede actions.\n"
            "Actions are executed in the order specified.\n"
@@ -322,7 +336,8 @@ static void usage(void) {
 
 /* Powers down the machine we're running on,
    as long as we're running on Bochs or QEMU. */
-void power_off(void) {
+void power_off(void)
+{
 #ifdef FILESYS
     filesys_done();
 #endif
@@ -336,7 +351,8 @@ void power_off(void) {
 }
 
 /* Print statistics about Pintos execution. */
-static void print_stats(void) {
+static void print_stats(void)
+{
     timer_print_stats();
     thread_print_stats();
 #ifdef FILESYS

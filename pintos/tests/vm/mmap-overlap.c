@@ -5,7 +5,8 @@
 #include "tests/lib.h"
 #include "tests/main.h"
 
-void test_main(void) {
+void test_main(void)
+{
     char *start = (char *)0x10000000;
     int fd[2];
 

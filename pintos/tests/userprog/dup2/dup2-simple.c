@@ -14,7 +14,8 @@
 #include "tests/userprog/boundary.h"
 #include "tests/userprog/sample.inc"
 
-int main(int argc UNUSED, char *argv[] UNUSED) {
+int main(int argc UNUSED, char *argv[] UNUSED)
+{
     test_name = "dup2-simple";
 
     char *buffer;
@@ -30,11 +31,13 @@ int main(int argc UNUSED, char *argv[] UNUSED) {
 
     byte_cnt += read(fd2, buffer + byte_cnt, sizeof sample - byte_cnt);
 
-    if (strcmp(sample, buffer)) {
+    if (strcmp(sample, buffer))
+    {
         msg("expected text:\n%s", sample);
         msg("text actually read:\n%s", buffer);
         fail("expected text differs from actual");
-    } else {
+    } else
+    {
         msg("Parent success");
     }
 }

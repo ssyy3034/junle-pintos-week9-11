@@ -27,7 +27,8 @@ void fail(const char *, ...) PRINTF_FORMAT(1, 2) NO_RETURN;
        it will be printed twice on failure, or zero times on
        success if quiet is set. */
 #define CHECK(SUCCESS, ...)                                                                                            \
-    do {                                                                                                               \
+    do                                                                                                                 \
+    {                                                                                                                  \
         msg(__VA_ARGS__);                                                                                              \
         if (!(SUCCESS))                                                                                                \
             fail(__VA_ARGS__);                                                                                         \

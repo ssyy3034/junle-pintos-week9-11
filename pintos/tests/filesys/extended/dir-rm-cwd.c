@@ -6,7 +6,8 @@
 #include "tests/lib.h"
 #include "tests/main.h"
 
-static int wrap_open(const char *name) {
+static int wrap_open(const char *name)
+{
     static int fds[8], fd_cnt;
     int fd, i;
 
@@ -18,7 +19,8 @@ static int wrap_open(const char *name) {
     return fd;
 }
 
-void test_main(void) {
+void test_main(void)
+{
     int root_fd, a_fd0;
     char name[READDIR_MAX_LEN + 1];
 
@@ -32,14 +34,16 @@ void test_main(void) {
     CHECK(chdir("a"), "chdir \"a\"");
 
     msg("try to remove \"/a\"");
-    if (remove("/a")) {
+    if (remove("/a"))
+    {
         msg("remove successful");
 
         CHECK(open("/a") == -1, "open \"/a\" (must fail)");
         CHECK(open(".") == -1, "open \".\" (must fail)");
         CHECK(open("..") == -1, "open \"..\" (must fail)");
         CHECK(!create("x", 512), "create \"x\" (must fail)");
-    } else {
+    } else
+    {
         int a_fd1, a_fd2, a_fd3;
 
         msg("remove failed");

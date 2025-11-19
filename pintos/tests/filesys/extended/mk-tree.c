@@ -8,18 +8,22 @@
 static void do_mkdir(const char *format, ...) PRINTF_FORMAT(1, 2);
 static void do_touch(const char *format, ...) PRINTF_FORMAT(1, 2);
 
-void make_tree(int at, int bt, int ct, int dt) {
+void make_tree(int at, int bt, int ct, int dt)
+{
     char try[128];
     int a, b, c, d;
     int fd;
 
     msg("creating /0/0/0/0 through /%d/%d/%d/%d...", at - 1, bt - 1, ct - 1, dt - 1);
     quiet = true;
-    for (a = 0; a < at; a++) {
+    for (a = 0; a < at; a++)
+    {
         do_mkdir("/%d", a);
-        for (b = 0; b < bt; b++) {
+        for (b = 0; b < bt; b++)
+        {
             do_mkdir("/%d/%d", a, b);
-            for (c = 0; c < ct; c++) {
+            for (c = 0; c < ct; c++)
+            {
                 do_mkdir("/%d/%d/%d", a, b, c);
                 for (d = 0; d < dt; d++)
                     do_touch("/%d/%d/%d/%d", a, b, c, d);
@@ -34,7 +38,8 @@ void make_tree(int at, int bt, int ct, int dt) {
     close(fd);
 }
 
-static void do_mkdir(const char *format, ...) {
+static void do_mkdir(const char *format, ...)
+{
     char dir[128];
     va_list args;
 
@@ -45,7 +50,8 @@ static void do_mkdir(const char *format, ...) {
     CHECK(mkdir(dir), "mkdir \"%s\"", dir);
 }
 
-static void do_touch(const char *format, ...) {
+static void do_touch(const char *format, ...)
+{
     char file[128];
     va_list args;
 

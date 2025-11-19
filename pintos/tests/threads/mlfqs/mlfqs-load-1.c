@@ -14,7 +14,8 @@
 #include "threads/thread.h"
 #include "devices/timer.h"
 
-void test_mlfqs_load_1(void) {
+void test_mlfqs_load_1(void)
+{
     int64_t start_time;
     int elapsed;
     int load_avg;
@@ -24,7 +25,8 @@ void test_mlfqs_load_1(void) {
     msg("spinning for up to 45 seconds, please wait...");
 
     start_time = timer_ticks();
-    for (;;) {
+    for (;;)
+    {
         load_avg = thread_get_load_avg();
         ASSERT(load_avg >= 0);
         elapsed = timer_elapsed(start_time) / TIMER_FREQ;

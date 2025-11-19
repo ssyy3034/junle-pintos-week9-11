@@ -7,7 +7,8 @@
 #include "tests/lib.h"
 #include "tests/main.h"
 
-void test_main(void) {
+void test_main(void)
+{
     static const char overwrite[] = "Now is the time for all good...";
     static char buffer[sizeof sample - 1];
     char *actual = (char *)0x54321000;
@@ -36,7 +37,8 @@ void test_main(void) {
 
     /* Verify that file overwrite worked. */
     if (memcmp(buffer, overwrite, strlen(overwrite)) ||
-        memcmp(buffer + strlen(overwrite), sample + strlen(overwrite), strlen(sample) - strlen(overwrite))) {
+        memcmp(buffer + strlen(overwrite), sample + strlen(overwrite), strlen(sample) - strlen(overwrite)))
+    {
         if (!memcmp(buffer, sample, strlen(sample)))
             fail("munmap wrote back clean page");
         else

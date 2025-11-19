@@ -41,11 +41,13 @@ static const struct test tests[] = {
 static const char *test_name;
 
 /* Runs the test named NAME. */
-void run_test(const char *name) {
+void run_test(const char *name)
+{
     const struct test *t;
 
     for (t = tests; t < tests + sizeof tests / sizeof *tests; t++)
-        if (!strcmp(name, t->name)) {
+        if (!strcmp(name, t->name))
+        {
             test_name = name;
             msg("begin");
             t->function();
@@ -58,7 +60,8 @@ void run_test(const char *name) {
 /* Prints FORMAT as if with printf(),
    prefixing the output by the name of the test
    and following it with a new-line character. */
-void msg(const char *format, ...) {
+void msg(const char *format, ...)
+{
     va_list args;
 
     printf("(%s) ", test_name);
@@ -72,7 +75,8 @@ void msg(const char *format, ...) {
    prefixing the output by the name of the test and FAIL:
    and following it with a new-line character,
    and then panics the kernel. */
-void fail(const char *format, ...) {
+void fail(const char *format, ...)
+{
     va_list args;
 
     printf("(%s) FAIL: ", test_name);
@@ -85,6 +89,7 @@ void fail(const char *format, ...) {
 }
 
 /* Prints a message indicating the current test passed. */
-void pass(void) {
+void pass(void)
+{
     printf("(%s) PASS\n", test_name);
 }

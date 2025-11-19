@@ -75,14 +75,17 @@ struct area {
 #define APPEND_HILO(hi, lo) (((uint64_t)((hi)) << 32) + (lo))
 
 /* Iterate on the e820 entry, parse the range of basemem and extmem. */
-static void resolve_area_info(struct area *base_mem, struct area *ext_mem) {
+static void resolve_area_info(struct area *base_mem, struct area *ext_mem)
+{
     struct multiboot_info *mb_info = ptov(MULTIBOOT_INFO);
     struct e820_entry *entries = ptov(mb_info->mmap_base);
     uint32_t i;
 
-    for (i = 0; i < mb_info->mmap_len / sizeof(struct e820_entry); i++) {
+    for (i = 0; i < mb_info->mmap_len / sizeof(struct e820_entry); i++)
+    {
         struct e820_entry *entry = &entries[i];
-        if (entry->type == ACPI_RECLAIMABLE || entry->type == USABLE) {
+        if (entry->type == ACPI_RECLAIMABLE || entry->type == USABLE)
+        {
             uint64_t start = APPEND_HILO(entry->mem_hi, entry->mem_lo);
             uint64_t size = APPEND_HILO(entry->len_hi, entry->len_lo);
             uint64_t end = start + size;
@@ -91,13 +94,15 @@ static void resolve_area_info(struct area *base_mem, struct area *ext_mem) {
             struct area *area = start < BASE_MEM_THRESHOLD ? base_mem : ext_mem;
 
             // First entry that belong to this area.
-            if (area->size == 0) {
+            if (area->size == 0)
+            {
                 *area = (struct area){
                     .start = start,
                     .end = end,
                     .size = size,
                 };
-            } else { // otherwise
+            } else
+            { // otherwise
                 // Extend start
                 if (area->start > start)
                     area->start = start;
@@ -117,7 +122,8 @@ static void resolve_area_info(struct area *base_mem, struct area *ext_mem) {
  * Basically, give half of memory to kernel, half to user.
  * We push base_mem portion to the kernel as much as possible.
  */
-static void populate_pools(struct area *base_mem, struct area *ext_mem) {
+static void populate_pools(struct area *base_mem, struct area *ext_mem)
+{
     extern char _end;
     void *free_start = pg_round_up(&_end);
 
@@ -139,50 +145,58 @@ static void populate_pools(struct area *base_mem, struct area *ext_mem) {
     struct e820_entry *entries = ptov(mb_info->mmap_base);
 
     uint32_t i;
-    for (i = 0; i < mb_info->mmap_len / sizeof(struct e820_entry); i++) {
+    for (i = 0; i < mb_info->mmap_len / sizeof(struct e820_entry); i++)
+    {
         struct e820_entry *entry = &entries[i];
-        if (entry->type == ACPI_RECLAIMABLE || entry->type == USABLE) {
+        if (entry->type == ACPI_RECLAIMABLE || entry->type == USABLE)
+        {
             start = (uint64_t)ptov(APPEND_HILO(entry->mem_hi, entry->mem_lo));
             size = APPEND_HILO(entry->len_hi, entry->len_lo);
             end = start + size;
             size_in_pg = size / PGSIZE;
 
-            if (state == KERN_START) {
+            if (state == KERN_START)
+            {
                 region_start = start;
                 state = KERN;
             }
 
-            switch (state) {
-            case KERN:
-                if (rem > size_in_pg) {
-                    rem -= size_in_pg;
+            switch (state)
+            {
+                case KERN:
+                    if (rem > size_in_pg)
+                    {
+                        rem -= size_in_pg;
+                        break;
+                    }
+                    // generate kernel pool
+                    init_pool(&kernel_pool, &free_start, region_start, start + rem * PGSIZE);
+                    // Transition to the next state
+                    if (rem == size_in_pg)
+                    {
+                        rem = user_pages;
+                        state = USER_START;
+                    } else
+                    {
+                        region_start = start + rem * PGSIZE;
+                        rem = user_pages - size_in_pg + rem;
+                        state = USER;
+                    }
                     break;
-                }
-                // generate kernel pool
-                init_pool(&kernel_pool, &free_start, region_start, start + rem * PGSIZE);
-                // Transition to the next state
-                if (rem == size_in_pg) {
-                    rem = user_pages;
-                    state = USER_START;
-                } else {
-                    region_start = start + rem * PGSIZE;
-                    rem = user_pages - size_in_pg + rem;
+                case USER_START:
+                    region_start = start;
                     state = USER;
-                }
-                break;
-            case USER_START:
-                region_start = start;
-                state = USER;
-                break;
-            case USER:
-                if (rem > size_in_pg) {
-                    rem -= size_in_pg;
                     break;
-                }
-                ASSERT(rem == size);
-                break;
-            default:
-                NOT_REACHED();
+                case USER:
+                    if (rem > size_in_pg)
+                    {
+                        rem -= size_in_pg;
+                        break;
+                    }
+                    ASSERT(rem == size);
+                    break;
+                default:
+                    NOT_REACHED();
             }
         }
     }
@@ -196,9 +210,11 @@ static void populate_pools(struct area *base_mem, struct area *ext_mem) {
     void *pool_end;
     size_t page_idx, page_cnt;
 
-    for (i = 0; i < mb_info->mmap_len / sizeof(struct e820_entry); i++) {
+    for (i = 0; i < mb_info->mmap_len / sizeof(struct e820_entry); i++)
+    {
         struct e820_entry *entry = &entries[i];
-        if (entry->type == ACPI_RECLAIMABLE || entry->type == USABLE) {
+        if (entry->type == ACPI_RECLAIMABLE || entry->type == USABLE)
+        {
             uint64_t start = (uint64_t)ptov(APPEND_HILO(entry->mem_hi, entry->mem_lo));
             uint64_t size = APPEND_HILO(entry->len_hi, entry->len_lo);
             uint64_t end = start + size;
@@ -219,12 +235,14 @@ static void populate_pools(struct area *base_mem, struct area *ext_mem) {
 
             pool_end = pool->base + bitmap_size(pool->used_map) * PGSIZE;
             page_idx = pg_no(start) - pg_no(pool->base);
-            if ((uint64_t)pool_end < end) {
+            if ((uint64_t)pool_end < end)
+            {
                 page_cnt = ((uint64_t)pool_end - start) / PGSIZE;
                 bitmap_set_multiple(pool->used_map, page_idx, page_cnt, false);
                 start = (uint64_t)pool_end;
                 goto split;
-            } else {
+            } else
+            {
                 page_cnt = ((uint64_t)end - start) / PGSIZE;
                 bitmap_set_multiple(pool->used_map, page_idx, page_cnt, false);
             }
@@ -233,7 +251,8 @@ static void populate_pools(struct area *base_mem, struct area *ext_mem) {
 }
 
 /* Initializes the page allocator and get the memory size */
-uint64_t palloc_init(void) {
+uint64_t palloc_init(void)
+{
     /* End of the kernel as recorded by the linker.
        See kernel.lds.S. */
     extern char _end;
@@ -254,7 +273,8 @@ uint64_t palloc_init(void) {
    then the pages are filled with zeros.  If too few pages are
    available, returns a null pointer, unless PAL_ASSERT is set in
    FLAGS, in which case the kernel panics. */
-void *palloc_get_multiple(enum palloc_flags flags, size_t page_cnt) {
+void *palloc_get_multiple(enum palloc_flags flags, size_t page_cnt)
+{
     struct pool *pool = flags & PAL_USER ? &user_pool : &kernel_pool;
 
     lock_acquire(&pool->lock);
@@ -267,10 +287,12 @@ void *palloc_get_multiple(enum palloc_flags flags, size_t page_cnt) {
     else
         pages = NULL;
 
-    if (pages) {
+    if (pages)
+    {
         if (flags & PAL_ZERO)
             memset(pages, 0, PGSIZE * page_cnt);
-    } else {
+    } else
+    {
         if (flags & PAL_ASSERT)
             PANIC("palloc_get: out of pages");
     }
@@ -285,12 +307,14 @@ void *palloc_get_multiple(enum palloc_flags flags, size_t page_cnt) {
    then the page is filled with zeros.  If no pages are
    available, returns a null pointer, unless PAL_ASSERT is set in
    FLAGS, in which case the kernel panics. */
-void *palloc_get_page(enum palloc_flags flags) {
+void *palloc_get_page(enum palloc_flags flags)
+{
     return palloc_get_multiple(flags, 1);
 }
 
 /* Frees the PAGE_CNT pages starting at PAGES. */
-void palloc_free_multiple(void *pages, size_t page_cnt) {
+void palloc_free_multiple(void *pages, size_t page_cnt)
+{
     struct pool *pool;
     size_t page_idx;
 
@@ -315,12 +339,14 @@ void palloc_free_multiple(void *pages, size_t page_cnt) {
 }
 
 /* Frees the page at PAGE. */
-void palloc_free_page(void *page) {
+void palloc_free_page(void *page)
+{
     palloc_free_multiple(page, 1);
 }
 
 /* Initializes pool P as starting at START and ending at END */
-static void init_pool(struct pool *p, void **bm_base, uint64_t start, uint64_t end) {
+static void init_pool(struct pool *p, void **bm_base, uint64_t start, uint64_t end)
+{
     /* We'll put the pool's used_map at its base.
        Calculate the space needed for the bitmap
        and subtract it from the pool's size. */
@@ -339,7 +365,8 @@ static void init_pool(struct pool *p, void **bm_base, uint64_t start, uint64_t e
 
 /* Returns true if PAGE was allocated from POOL,
    false otherwise. */
-static bool page_from_pool(const struct pool *pool, void *page) {
+static bool page_from_pool(const struct pool *pool, void *page)
+{
     size_t page_no = pg_no(page);
     size_t start_page = pg_no(pool->base);
     size_t end_page = start_page + bitmap_size(pool->used_map);

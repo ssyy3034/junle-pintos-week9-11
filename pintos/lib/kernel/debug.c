@@ -11,7 +11,8 @@
 
 /* Halts the OS, printing the source file name, line number, and
    function name, plus a user-specific message. */
-void debug_panic(const char *file, int line, const char *function, const char *message, ...) {
+void debug_panic(const char *file, int line, const char *function, const char *message, ...)
+{
     static int level;
     va_list args;
 
@@ -19,7 +20,8 @@ void debug_panic(const char *file, int line, const char *function, const char *m
     console_panic();
 
     level++;
-    if (level == 1) {
+    if (level == 1)
+    {
         printf("Kernel PANIC at %s:%d in %s(): ", file, line, function);
 
         va_start(args, message);
@@ -30,7 +32,8 @@ void debug_panic(const char *file, int line, const char *function, const char *m
         debug_backtrace();
     } else if (level == 2)
         printf("Kernel PANIC recursion at %s:%d in %s().\n", file, line, function);
-    else {
+    else
+    {
         /* Don't print anything: that's probably why we recursed. */
     }
 

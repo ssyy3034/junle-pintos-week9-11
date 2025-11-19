@@ -18,7 +18,8 @@
 static thread_func a_thread_func;
 static thread_func b_thread_func;
 
-void test_priority_donate_multiple(void) {
+void test_priority_donate_multiple(void)
+{
     struct lock a, b;
 
     /* This test does not work with the MLFQS. */
@@ -48,7 +49,8 @@ void test_priority_donate_multiple(void) {
     msg("Main thread should have priority %d.  Actual priority: %d.", PRI_DEFAULT, thread_get_priority());
 }
 
-static void a_thread_func(void *lock_) {
+static void a_thread_func(void *lock_)
+{
     struct lock *lock = lock_;
 
     lock_acquire(lock);
@@ -57,7 +59,8 @@ static void a_thread_func(void *lock_) {
     msg("Thread a finished.");
 }
 
-static void b_thread_func(void *lock_) {
+static void b_thread_func(void *lock_)
+{
     struct lock *lock = lock_;
 
     lock_acquire(lock);

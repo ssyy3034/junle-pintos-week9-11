@@ -8,7 +8,8 @@
 static const char file_name[] = "data";
 static char buf[TEST_SIZE];
 
-void test_main(void) {
+void test_main(void)
+{
     int fd;
     char c;
     long long read_cnt, write_cnt;
@@ -23,7 +24,8 @@ void test_main(void) {
     CHECK(write(fd, buf, sizeof buf) > 0, "write \"%s\"", file_name);
 
     seek(fd, 0);
-    for (int i = 0; i < TEST_SIZE; i++) {
+    for (int i = 0; i < TEST_SIZE; i++)
+    {
         read(fd, &c, 1);
         if (buf[i] != c)
             fail("file content mismatch in %d : %x %x", i, buf[i], c);
@@ -33,7 +35,8 @@ void test_main(void) {
     }
 
     seek(fd, 0);
-    for (int i = 0; i < TEST_SIZE; i++) {
+    for (int i = 0; i < TEST_SIZE; i++)
+    {
         read(fd, &c, 1);
         if (c != 'a')
             fail("file content mismatch in %d : %x %x", i, buf[i], c);

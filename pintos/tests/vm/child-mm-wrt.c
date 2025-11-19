@@ -11,7 +11,8 @@
 
 #define ACTUAL ((void *)0x10000000)
 
-void test_main(void) {
+void test_main(void)
+{
     int handle;
 
     CHECK(create("sample.txt", sizeof sample), "create \"sample.txt\"");

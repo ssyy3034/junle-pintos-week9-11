@@ -27,7 +27,8 @@ struct simple_thread_data {
 
 static thread_func simple_thread_func;
 
-void test_priority_fifo(void) {
+void test_priority_fifo(void)
+{
     struct simple_thread_data data[THREAD_CNT];
     struct lock lock;
     int *output, *op;
@@ -47,7 +48,8 @@ void test_priority_fifo(void) {
     lock_init(&lock);
 
     thread_set_priority(PRI_DEFAULT + 2);
-    for (i = 0; i < THREAD_CNT; i++) {
+    for (i = 0; i < THREAD_CNT; i++)
+    {
         char name[16];
         struct simple_thread_data *d = data + i;
         snprintf(name, sizeof name, "%d", i);
@@ -63,7 +65,8 @@ void test_priority_fifo(void) {
     ASSERT(lock.holder == NULL);
 
     cnt = 0;
-    for (; output < op; output++) {
+    for (; output < op; output++)
+    {
         struct simple_thread_data *d;
 
         ASSERT(*output >= 0 && *output < THREAD_CNT);
@@ -77,11 +80,13 @@ void test_priority_fifo(void) {
     }
 }
 
-static void simple_thread_func(void *data_) {
+static void simple_thread_func(void *data_)
+{
     struct simple_thread_data *data = data_;
     int i;
 
-    for (i = 0; i < ITER_CNT; i++) {
+    for (i = 0; i < ITER_CNT; i++)
+    {
         lock_acquire(data->lock);
         *(*data->op)++ = data->id;
         lock_release(data->lock);

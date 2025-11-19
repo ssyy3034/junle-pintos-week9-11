@@ -12,9 +12,9 @@ void syscall_entry(void);
 void syscall_handler(struct intr_frame *);
 
 // syscall 함수들 ========
-static void sys_halt(void);                                         // 완료
-static void sys_exit(int status);                                 // 완료
-static int sys_write(int fd, const void *buffer, unsigned length);  //완료
+static void sys_halt(void);                                        // 완료
+static void sys_exit(int status);                                  // 완료
+static int sys_write(int fd, const void *buffer, unsigned length); // 완료
 
 /* System call.
  *
@@ -29,7 +29,8 @@ static int sys_write(int fd, const void *buffer, unsigned length);  //완료
 #define MSR_LSTAR 0xc0000082        /* Long mode SYSCALL target */
 #define MSR_SYSCALL_MASK 0xc0000084 /* Mask for the eflags */
 
-void syscall_init(void) {
+void syscall_init(void)
+{
     write_msr(MSR_STAR, ((uint64_t)SEL_UCSEG - 0x10) << 48 | ((uint64_t)SEL_KCSEG) << 32);
     write_msr(MSR_LSTAR, (uint64_t)syscall_entry);
 
@@ -66,7 +67,7 @@ void syscall_handler(struct intr_frame *f UNUSED)
 
             f->R.rax = sys_write(fd, buffer, length);
             break;
-            
+
         default:
             sys_exit(-1);
             break;

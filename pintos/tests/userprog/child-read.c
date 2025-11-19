@@ -14,7 +14,8 @@
 #include "tests/userprog/sample.inc"
 #include "tests/lib.h"
 
-int main(int argc UNUSED, char *argv[]) {
+int main(int argc UNUSED, char *argv[])
+{
     test_name = "child-read";
 
     int handle1, handle2;
@@ -33,11 +34,13 @@ int main(int argc UNUSED, char *argv[]) {
     CHECK((byte_cnt = read(handle1, buffer + 20, sizeof sample - 21)) == sizeof sample - 21,
           "read \"sample.txt\" remainders");
 
-    if (strcmp(sample, buffer)) {
+    if (strcmp(sample, buffer))
+    {
         msg("expected text:\n%s", sample);
         msg("text actually read:\n%s", buffer);
         fail("expected text differs from actual");
-    } else {
+    } else
+    {
         msg("Child success");
     }
 

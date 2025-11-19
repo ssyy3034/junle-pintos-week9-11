@@ -4,7 +4,8 @@
 #include "tests/lib.h"
 
 void seq_test(const char *file_name, void *buf, size_t size, size_t initial_size, size_t (*block_size_func)(void),
-              void (*check_func)(int fd, long ofs)) {
+              void (*check_func)(int fd, long ofs))
+{
     size_t ofs;
     int fd;
 
@@ -14,7 +15,8 @@ void seq_test(const char *file_name, void *buf, size_t size, size_t initial_size
 
     ofs = 0;
     msg("writing \"%s\"", file_name);
-    while (ofs < size) {
+    while (ofs < size)
+    {
         size_t block_size = block_size_func();
         if (block_size > size - ofs)
             block_size = size - ofs;

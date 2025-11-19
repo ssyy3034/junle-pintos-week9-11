@@ -13,7 +13,8 @@
 
 static char *buf = (char *)0x10000000;
 
-void test_main(void) {
+void test_main(void)
+{
     size_t i;
     int handle;
 
@@ -28,7 +29,8 @@ void test_main(void) {
     msg("init: cksum=%lu", cksum(buf, SIZE));
 
     /* Shuffle repeatedly. */
-    for (i = 0; i < 10; i++) {
+    for (i = 0; i < 10; i++)
+    {
         shuffle(buf, SIZE, 1);
         msg("shuffle %zu: cksum=%lu", i, cksum(buf, SIZE));
     }

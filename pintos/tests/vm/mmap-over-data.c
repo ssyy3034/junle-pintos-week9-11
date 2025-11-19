@@ -8,7 +8,8 @@
 
 static char x;
 
-void test_main(void) {
+void test_main(void)
+{
     uintptr_t x_page = ROUND_DOWN((uintptr_t)&x, 4096);
     int handle;
 

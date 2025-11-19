@@ -20,7 +20,8 @@ size_t histogram[256];
 
 /* Initialize buf1 with random data,
    then count the number of instances of each value within it. */
-static void init(void) {
+static void init(void)
+{
     struct arc4 arc4;
     size_t i;
 
@@ -33,11 +34,13 @@ static void init(void) {
 }
 
 /* Sort each chunk of buf1 using a subprocess. */
-static void sort_chunks(void) {
+static void sort_chunks(void)
+{
     size_t i;
 
     create("buffer", CHUNK_SIZE);
-    for (i = 0; i < CHUNK_CNT; i++) {
+    for (i = 0; i < CHUNK_CNT; i++)
+    {
         pid_t child;
         int handle;
 
@@ -55,13 +58,15 @@ static void sort_chunks(void) {
         /* 	CHECK (exec ("child-sort buffer") != -1, "exec \"child-sort buffer\""); */
         /* } else { */
         /* 	CHECK (wait (child) == 123, "wait for child-sort"); */
-        if (child == 0) {
+        if (child == 0)
+        {
             quiet = false;
             msg("child[%zu] exec", i);
             if (exec("child-sort buffer") == -1)
                 fail("child[%zu] exec fail", i);
             quiet = true;
-        } else {
+        } else
+        {
             quiet = false;
             if (wait(child) != 123)
                 fail("child[%zu] wait fail", i);
@@ -79,7 +84,8 @@ static void sort_chunks(void) {
 }
 
 /* Merge the sorted chunks in buf1 into a fully sorted buf2. */
-static void merge(void) {
+static void merge(void)
+{
     unsigned char *mp[CHUNK_CNT];
     size_t mp_left;
     unsigned char *op;
@@ -94,7 +100,8 @@ static void merge(void) {
 
     /* Merge. */
     op = buf2;
-    while (mp_left > 0) {
+    while (mp_left > 0)
+    {
         /* Find smallest value. */
         size_t min = 0;
         for (i = 1; i < mp_left; i++)
@@ -111,15 +118,18 @@ static void merge(void) {
     }
 }
 
-static void verify(void) {
+static void verify(void)
+{
     size_t buf_idx;
     size_t hist_idx;
 
     msg("verify");
 
     buf_idx = 0;
-    for (hist_idx = 0; hist_idx < sizeof histogram / sizeof *histogram; hist_idx++) {
-        while (histogram[hist_idx]-- > 0) {
+    for (hist_idx = 0; hist_idx < sizeof histogram / sizeof *histogram; hist_idx++)
+    {
+        while (histogram[hist_idx]-- > 0)
+        {
             if (buf2[buf_idx] != hist_idx)
                 fail("bad value %d in byte %zu", buf2[buf_idx], buf_idx);
             buf_idx++;
@@ -129,7 +139,8 @@ static void verify(void) {
     msg("success, buf_idx=%'zu", buf_idx);
 }
 
-void test_main(void) {
+void test_main(void)
+{
     init();
     sort_chunks();
     merge();

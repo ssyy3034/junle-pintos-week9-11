@@ -6,12 +6,15 @@
 #include "tests/lib.h"
 #include "tests/main.h"
 
-void test_main(void) {
+void test_main(void)
+{
     pid_t child;
-    if ((child = fork("child-simple"))) {
+    if ((child = fork("child-simple")))
+    {
         msg("wait(exec()) = %d", wait(child));
         msg("wait(exec()) = %d", wait(child));
-    } else {
+    } else
+    {
         exec("child-simple");
     }
 }

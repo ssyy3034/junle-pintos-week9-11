@@ -19,7 +19,8 @@ size_t histogram[256];
 
 /* Initialize buf1 with random data,
    then count the number of instances of each value within it. */
-static void init(void) {
+static void init(void)
+{
     struct arc4 arc4;
     size_t i;
 
@@ -33,11 +34,13 @@ static void init(void) {
 
 /* Sort each chunk of buf1 using SUBPROCESS,
    which is expected to return EXIT_STATUS. */
-static void sort_chunks(const char *subprocess, int exit_status) {
+static void sort_chunks(const char *subprocess, int exit_status)
+{
     pid_t children[CHUNK_CNT];
     size_t i;
 
-    for (i = 0; i < CHUNK_CNT; i++) {
+    for (i = 0; i < CHUNK_CNT; i++)
+    {
         char fn[128];
         char cmd[128];
         int handle;
@@ -60,7 +63,8 @@ static void sort_chunks(const char *subprocess, int exit_status) {
         quiet = false;
     }
 
-    for (i = 0; i < CHUNK_CNT; i++) {
+    for (i = 0; i < CHUNK_CNT; i++)
+    {
         char fn[128];
         int handle;
 
@@ -77,7 +81,8 @@ static void sort_chunks(const char *subprocess, int exit_status) {
 }
 
 /* Merge the sorted chunks in buf1 into a fully sorted buf2. */
-static void merge(void) {
+static void merge(void)
+{
     unsigned char *mp[CHUNK_CNT];
     size_t mp_left;
     unsigned char *op;
@@ -92,7 +97,8 @@ static void merge(void) {
 
     /* Merge. */
     op = buf2;
-    while (mp_left > 0) {
+    while (mp_left > 0)
+    {
         /* Find smallest value. */
         size_t min = 0;
         for (i = 1; i < mp_left; i++)
@@ -109,15 +115,18 @@ static void merge(void) {
     }
 }
 
-static void verify(void) {
+static void verify(void)
+{
     size_t buf_idx;
     size_t hist_idx;
 
     msg("verify");
 
     buf_idx = 0;
-    for (hist_idx = 0; hist_idx < sizeof histogram / sizeof *histogram; hist_idx++) {
-        while (histogram[hist_idx]-- > 0) {
+    for (hist_idx = 0; hist_idx < sizeof histogram / sizeof *histogram; hist_idx++)
+    {
+        while (histogram[hist_idx]-- > 0)
+        {
             if (buf2[buf_idx] != hist_idx)
                 fail("bad value %d in byte %zu", buf2[buf_idx], buf_idx);
             buf_idx++;
@@ -127,7 +136,8 @@ static void verify(void) {
     msg("success, buf_idx=%'zu", buf_idx);
 }
 
-void parallel_merge(const char *child_name, int exit_status) {
+void parallel_merge(const char *child_name, int exit_status)
+{
     init();
     sort_chunks(child_name, exit_status);
     merge();

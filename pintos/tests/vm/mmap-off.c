@@ -7,7 +7,8 @@
 #include "tests/vm/large.inc"
 static char zeros[0x1000];
 
-void test_main(void) {
+void test_main(void)
+{
     int handle;
     char buf[0x1000];
 

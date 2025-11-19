@@ -6,7 +6,8 @@
 #include "tests/lib.h"
 #include "tests/main.h"
 
-void test_main(void) {
+void test_main(void)
+{
     int handle;
     CHECK((handle = open("large.txt")) > 1, "open \"large.txt\"");
 

@@ -6,7 +6,8 @@
 #include "tests/lib.h"
 #include "tests/main.h"
 
-void test_main(void) {
+void test_main(void)
+{
     uintptr_t test_main_page = ROUND_DOWN((uintptr_t)test_main, 4096);
     int handle;
 

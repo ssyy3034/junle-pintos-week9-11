@@ -9,7 +9,8 @@
 #include "tests/lib.h"
 #include "tests/main.h"
 
-void test_main(void) {
+void test_main(void)
+{
     char child_cmd[128];
     int handle;
 
@@ -18,7 +19,8 @@ void test_main(void) {
     snprintf(child_cmd, sizeof child_cmd, "child-close %d", handle);
 
     pid_t pid;
-    if (!(pid = fork("child-close"))) {
+    if (!(pid = fork("child-close")))
+    {
         exec(child_cmd);
     }
     msg("wait(exec()) = %d", wait(pid));

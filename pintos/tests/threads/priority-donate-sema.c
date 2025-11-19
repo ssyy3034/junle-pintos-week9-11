@@ -25,7 +25,8 @@ static thread_func l_thread_func;
 static thread_func m_thread_func;
 static thread_func h_thread_func;
 
-void test_priority_donate_sema(void) {
+void test_priority_donate_sema(void)
+{
     struct lock_and_sema ls;
 
     /* This test does not work with the MLFQS. */
@@ -43,7 +44,8 @@ void test_priority_donate_sema(void) {
     msg("Main thread finished.");
 }
 
-static void l_thread_func(void *ls_) {
+static void l_thread_func(void *ls_)
+{
     struct lock_and_sema *ls = ls_;
 
     lock_acquire(&ls->lock);
@@ -54,14 +56,16 @@ static void l_thread_func(void *ls_) {
     msg("Thread L finished.");
 }
 
-static void m_thread_func(void *ls_) {
+static void m_thread_func(void *ls_)
+{
     struct lock_and_sema *ls = ls_;
 
     sema_down(&ls->sema);
     msg("Thread M finished.");
 }
 
-static void h_thread_func(void *ls_) {
+static void h_thread_func(void *ls_)
+{
     struct lock_and_sema *ls = ls_;
 
     lock_acquire(&ls->lock);

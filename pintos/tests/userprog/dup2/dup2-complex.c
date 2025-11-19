@@ -16,7 +16,8 @@
 
 char magic[] = {"Pintos is funny\n"};
 
-int main(int argc UNUSED, char *argv[] UNUSED) {
+int main(int argc UNUSED, char *argv[] UNUSED)
+{
     test_name = "dup2-complex";
 
     char *buffer;
@@ -57,7 +58,8 @@ int main(int argc UNUSED, char *argv[] UNUSED) {
     byte_cnt += read(fd2, buffer + byte_cnt, 10);
     byte_cnt += read(fd1, buffer + byte_cnt, 10);
 
-    for (fd5 = 10; fd5 == fd1 || fd5 == fd2 || fd5 == fd3 || fd5 == fd4; fd5++) {
+    for (fd5 = 10; fd5 == fd1 || fd5 == fd2 || fd5 == fd3 || fd5 == fd4; fd5++)
+    {
     }
     dup2(1, fd5);
 
@@ -76,7 +78,8 @@ int main(int argc UNUSED, char *argv[] UNUSED) {
     write(fd4, magic, strlen(magic));
 
     pid_t pid;
-    if (!(pid = fork("child"))) { // child
+    if (!(pid = fork("child")))
+    { // child
         msg("child begin");
         close(fd1);
         close(fd2);
@@ -119,11 +122,13 @@ int main(int argc UNUSED, char *argv[] UNUSED) {
 
     seek(1, 0);
 
-    if (strcmp(sample, buffer)) {
+    if (strcmp(sample, buffer))
+    {
         msg("expected text:\n%s", sample);
         msg("text actually read:\n%s", buffer);
         fail("expected text differs from actual");
-    } else {
+    } else
+    {
         msg("Parent success");
         close(1);
     }

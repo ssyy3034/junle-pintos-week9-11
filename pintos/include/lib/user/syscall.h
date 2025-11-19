@@ -50,7 +50,8 @@ bool isdir(int fd);
 int inumber(int fd);
 int symlink(const char *target, const char *linkpath);
 
-static inline void *get_phys_addr(void *user_addr) {
+static inline void *get_phys_addr(void *user_addr)
+{
     void *pa;
     asm volatile("movq %0, %%rax" ::"r"(user_addr));
     asm volatile("int $0x42");
@@ -58,7 +59,8 @@ static inline void *get_phys_addr(void *user_addr) {
     return pa;
 }
 
-static inline long long get_fs_disk_read_cnt(void) {
+static inline long long get_fs_disk_read_cnt(void)
+{
     long long read_cnt;
     asm volatile("movq $0, %rdx");
     asm volatile("movq $1, %rcx");
@@ -67,7 +69,8 @@ static inline long long get_fs_disk_read_cnt(void) {
     return read_cnt;
 }
 
-static inline long long get_fs_disk_write_cnt(void) {
+static inline long long get_fs_disk_write_cnt(void)
+{
     long long write_cnt;
     asm volatile("movq $0, %rdx");
     asm volatile("movq $1, %rcx");
