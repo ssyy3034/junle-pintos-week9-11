@@ -1,0 +1,25 @@
+{
+    "configurations": [
+        {
+            "name": "Pintos",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/Pintos/lib",
+                "${workspaceFolder}/Pintos/lib/kernel",
+                "${workspaceFolder}/Pintos/userprog",
+                "${workspaceFolder}/Pintos/threads"
+                // 필요한 경우 다른 include 폴더도 추가하세요.
+            ],
+            "defines": [
+                "USERPROG",
+                "THREADS",
+                "DEBUG"
+                // 현재 진행 중인 프로젝트에 맞춰 VM, FILESYS 등을 추가하세요.
+            ],
+            "cStandard": "c11",
+            "intelliSenseMode": "linux-gcc-x64",
+            "compilerPath": "/usr/bin/gcc" // 실제 컴파일러 경로 (없어도 동작할 수 있음)
+        }
+    ],
+    "version": 4
+}
