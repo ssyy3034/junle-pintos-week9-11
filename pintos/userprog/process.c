@@ -22,6 +22,8 @@
 #include "vm/vm.h"
 #endif
 
+#define STACK_DOWN_UNIT64(sp) (sp -= sizeof(char *))
+
 static void process_cleanup(void);
 static bool load(const char *file_name, struct intr_frame *if_);
 static void initd(void *f_name);
@@ -215,6 +217,8 @@ void process_exit(void)
      * TODO: Implement process termination message (see
      * TODO: project2/process_termination.html).
      * TODO: We recommend you to implement process resource cleanup here. */
+    // 프로세스 끝날때 [ 'args-none: exit(exit번호)' ]가 출력돼야함!====
+    printf("%s: exit(%d)\n", curr->name, curr->exit_code);
 
     process_cleanup();
 }
@@ -357,7 +361,7 @@ static bool load(const char *file_name, struct intr_frame *if_)
     }
     //  ========================
     /* Open executable file. */
-    file = filesys_open(file_name); //-> file_name이 null이면 안됨
+    file = filesys_open(file_name);
     if (file == NULL)
     {
         printf("load: %s: open failed\n", file_name);
@@ -388,43 +392,43 @@ static bool load(const char *file_name, struct intr_frame *if_)
         file_ofs += sizeof phdr;
         switch (phdr.p_type)
         {
-        case PT_NULL:
-        case PT_NOTE:
-        case PT_PHDR:
-        case PT_STACK:
-        default:
-            /* Ignore this segment. */
-            break;
-        case PT_DYNAMIC:
-        case PT_INTERP:
-        case PT_SHLIB:
-            goto done;
-        case PT_LOAD:
-            if (validate_segment(&phdr, file))
-            {
-                bool writable = (phdr.p_flags & PF_W) != 0;
-                uint64_t file_page = phdr.p_offset & ~PGMASK;
-                uint64_t mem_page = phdr.p_vaddr & ~PGMASK;
-                uint64_t page_offset = phdr.p_vaddr & PGMASK;
-                uint32_t read_bytes, zero_bytes;
-                if (phdr.p_filesz > 0)
-                {
-                    /* Normal segment.
-                     * Read initial part from disk and zero the rest. */
-                    read_bytes = page_offset + phdr.p_filesz;
-                    zero_bytes = (ROUND_UP(page_offset + phdr.p_memsz, PGSIZE) - read_bytes);
-                } else
-                {
-                    /* Entirely zero.
-                     * Don't read anything from disk. */
-                    read_bytes = 0;
-                    zero_bytes = ROUND_UP(page_offset + phdr.p_memsz, PGSIZE);
-                }
-                if (!load_segment(file, file_page, (void *)mem_page, read_bytes, zero_bytes, writable))
-                    goto done;
-            } else
+            case PT_NULL:
+            case PT_NOTE:
+            case PT_PHDR:
+            case PT_STACK:
+            default:
+                /* Ignore this segment. */
+                break;
+            case PT_DYNAMIC:
+            case PT_INTERP:
+            case PT_SHLIB:
                 goto done;
-            break;
+            case PT_LOAD:
+                if (validate_segment(&phdr, file))
+                {
+                    bool writable = (phdr.p_flags & PF_W) != 0;
+                    uint64_t file_page = phdr.p_offset & ~PGMASK;
+                    uint64_t mem_page = phdr.p_vaddr & ~PGMASK;
+                    uint64_t page_offset = phdr.p_vaddr & PGMASK;
+                    uint32_t read_bytes, zero_bytes;
+                    if (phdr.p_filesz > 0)
+                    {
+                        /* Normal segment.
+                         * Read initial part from disk and zero the rest. */
+                        read_bytes = page_offset + phdr.p_filesz;
+                        zero_bytes = (ROUND_UP(page_offset + phdr.p_memsz, PGSIZE) - read_bytes);
+                    } else
+                    {
+                        /* Entirely zero.
+                         * Don't read anything from disk. */
+                        read_bytes = 0;
+                        zero_bytes = ROUND_UP(page_offset + phdr.p_memsz, PGSIZE);
+                    }
+                    if (!load_segment(file, file_page, (void *)mem_page, read_bytes, zero_bytes, writable))
+                        goto done;
+                } else
+                    goto done;
+                break;
         }
     }
 
@@ -433,20 +437,17 @@ static bool load(const char *file_name, struct intr_frame *if_)
         goto done;
 
     /* Start address. */
-    if_->rip = ehdr.e_entry; // pc주소
-
-    /* TODO: Your code goes here.
-     * TODO: Implement argument passing (see project2/argument_passing.html). */
+    if_->rip = ehdr.e_entry;
 
     // 2) 스택에 인자데이터 쌓기 ========================
-    int len_sum = 0;                   // 각 인자 길이의 합(패딩 계산용)
+    // int len_sum = 0;                   // 각 인자 길이의 합(패딩 계산용)
     char *argvP[128];                  // 각 인자 주소 담을 배열
     uint8_t *sp = (uint8_t *)if_->rsp; // rsp: 정수형
     // ->주소로 넣어야해서 1Byte단위로 형변환(메모리공간은 1바이트단위로 접근 가능)
     for (int idx = 0; idx < arg_c; idx++)
     {
         int len = strlen(arg_v[idx]) + 1; //+1: '\0'(널문자)
-        len_sum += len;
+        // len_sum += len;
 
         sp -= len;
         memcpy(sp, arg_v[idx], len); // 넣을 "주소", char*데이터 주소, 사이즈
@@ -454,32 +455,28 @@ static bool load(const char *file_name, struct intr_frame *if_)
         // argvP[idx] = &arg_v[idx]; ->틀린이유: 궁금한건 커널 배열 주소가 아닌 유저스택에 복사된 주소
         argvP[idx] = (char *)sp;
     }
-    // hex_dump(if_->rsp, USER_STACK - (uintptr_t)if_->rsp, 100, true);
     //   3) 스택에 패딩 쌓기 ========================
-    //   **memcpy(): 복사할 데이터가 있는 주소여야 쓸 수 있음(그냥 직접쓰기로 0 넣기)
-    while (len_sum % 8 != 0) //->권장:  while ((uint64_t)sp % 8 != 0)
+    while (((uint8_t *)USER_STACK - sp) % 8 != 0) //->권장:  while ((uint64_t)sp % 8 != 0)
     {
         sp--;
         *sp = 0;
-        len_sum += 1;
     }
 
     // 4) 스택에 인자들 주소 순서대로 쌓기 ========================
-    // int len = 8; ->[x]: 하드코딩 지양하기
     int len = sizeof(char *);
     char *emptyP = NULL;
-    sp -= len;
+    STACK_DOWN_UNIT64(sp);
     memcpy(sp, &emptyP, len); // 포인터배열 내 끝은 항상 NULL (cf. 문자배열 내 끝:'\0')
     for (int idx = arg_c - 1; idx >= 0; idx--)
     {
-        sp -= len;
+        STACK_DOWN_UNIT64(sp);
         memcpy(sp, &argvP[idx], len);
     }
     char **lastArgP = (char **)sp; // char* arv[0]의 주소
 
     // 5) 스택에 리턴 주소 쌓기(fake) ========================
     void *fake_ret = NULL;
-    sp -= sizeof(void *);
+    STACK_DOWN_UNIT64(sp);
     memcpy(sp, &fake_ret, sizeof(void *));
 
     // 6) 진짜 rsp 포인터 업데이트 ========================
