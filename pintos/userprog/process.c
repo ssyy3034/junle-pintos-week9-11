@@ -220,6 +220,7 @@ void process_exit(void)
 	 * TODO: Implement process termination message (see
 	 * TODO: project2/process_termination.html).
 	 * TODO: We recommend you to implement process resource cleanup here. */
+	printf("%s: exit(%d)\n", curr->name, curr->exit_code);
 
 	process_cleanup();
 }
@@ -377,7 +378,7 @@ load(const char *file_name, struct intr_frame *if_)
 	}
 	argv[argc] = 0;
 
-	char *argv_addr[argc];
+	char *argv_addr[argc + 1];
 	// file_name 실제 파일명으로 재정의
 	file_name = argv[0];
 
@@ -504,21 +505,11 @@ load(const char *file_name, struct intr_frame *if_)
 	argv_addr[argc] = 0;
 	/*
 	 - 패딩 맞추기(%8 == 0 일때 까지 0 추가)
-	 -> 현재까지 쌓은 양 : 초기값 - 현재값(스택은 아래로 자라기 때문)
-	 -> 8 - (그 양 % 8) 만큼 아래로 내려가기
+		->(수정) while문으로 % 8 체크하며 계속 내려가기
 	*/
-	// if (((uint8_t *)USER_STACK - rsp) % 8 != 0)
-	// {
-	// 	rsp -= (8 - ((uint8_t *)USER_STACK - rsp) % 8);
-	// 	memcpy(rsp, 0, 8 - ((uint8_t *)USER_STACK - rsp) % 8);
-	// }
-	if (((uint8_t *)USER_STACK - rsp) % 8 != 0)
+	while (((uint8_t *)USER_STACK - rsp) % 8 != 0)
 	{
-		for (int i = 0; i < 8 - ((uint8_t *)USER_STACK - rsp) % 8; i++)
-		{
-			rsp -= 1;
-			// *rsp = 0;
-		}
+		rsp -= 1;
 	}
 	// hex_dump(if_->rsp, USER_STACK - (uintptr_t)if_->rsp, 100, true);
 
@@ -529,25 +520,25 @@ load(const char *file_name, struct intr_frame *if_)
 	{
 		// 목적지 - rsp / 소스 - argv[i] / 길이
 		rsp -= sizeof(char *);
-		*rsp = argv_addr[i];
-		// memcpy(rsp, argv_addr[i], sizeOf(argv_addr[i]));
+		*(uint64_t *)rsp = argv_addr[i];
+		// memcpy(rsp, argv_addr[i], sizeof(char *));
 	}
 
 	/*
 	 - %rsi에 argv[0], %rdi에 argc
 	*/
-	if_->R.rsi = rsp;
+	if_->R.rsi = (uint64_t)rsp;
 	if_->R.rdi = argc;
 
 	/*
 		- fake return address push
 	*/
 	rsp -= sizeof(void *);
-	*rsp = 0;
+	// *rsp = 0;
 
-	if_->rsp = rsp;
+	if_->rsp = (uint64_t)rsp;
 
-	hex_dump(if_->rsp, if_->rsp, USER_STACK - (uintptr_t)if_->rsp, true);
+	// hex_dump(if_->rsp, if_->rsp, USER_STACK - (uintptr_t)if_->rsp, true);
 	success = true;
 
 done:

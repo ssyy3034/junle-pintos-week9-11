@@ -95,6 +95,7 @@ struct thread
 	enum thread_status status; /* Thread state. */
 	char name[16];			   /* Name (for debugging purposes). */
 	int priority;			   /* Priority. */
+	int exit_code;			   /* exit code(process_exit) */
 
 	/* Priority donate */
 	int donation_priority;	   /* Priority on donation */

@@ -9,7 +9,20 @@
         "random": "c",
         "limits": "c",
         "numeric": "c",
-        "loader.h": "c"
+        "loader.h": "c",
+        "lib.h": "c",
+        "stddef.h": "c",
+        "*.inc": "c",
+        "exception": "c",
+        "memory_resource": "c",
+        "iosfwd": "c",
+        "new": "c",
+        "ostream": "c",
+        "streambuf": "c",
+        "syscall.h": "c",
+        "gdt.h": "c",
+        "string.h": "c",
+        "stdio.h": "c"
     },
 
     // ------------------------------------
