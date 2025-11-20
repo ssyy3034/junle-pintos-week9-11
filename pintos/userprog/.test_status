@@ -2,7 +2,7 @@ args-dbl-space PASS
 args-multiple PASS
 create-normal PASS
 bad-write FAIL
-open-twice FAIL
+open-twice PASS
 create-long PASS
 create-bound PASS
 open-empty PASS
@@ -11,7 +11,7 @@ args-none PASS
 create-bad-ptr PASS
 halt PASS
 write-bad-fd PASS
-open-boundary FAIL
+open-boundary PASS
 create-null PASS
 open-bad-ptr PASS
 write-normal FAIL
