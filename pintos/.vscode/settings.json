@@ -22,7 +22,11 @@
         "syscall.h": "c",
         "gdt.h": "c",
         "string.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "array": "c",
+        "initializer_list": "c",
+        "thread.h": "c",
+        "atomic": "c"
     },
 
     // ------------------------------------

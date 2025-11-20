@@ -10,12 +10,11 @@
 #endif
 
 /* States in a thread's life cycle. */
-enum thread_status
-{
-	THREAD_RUNNING, /* Running thread. */
-	THREAD_READY,	/* Not running but ready to run. */
-	THREAD_BLOCKED, /* Waiting for an event to trigger. */
-	THREAD_DYING	/* About to be destroyed. */
+enum thread_status {
+    THREAD_RUNNING, /* Running thread. */
+    THREAD_READY,   /* Not running but ready to run. */
+    THREAD_BLOCKED, /* Waiting for an event to trigger. */
+    THREAD_DYING    /* About to be destroyed. */
 };
 
 /* Thread identifier type.
@@ -24,9 +23,9 @@ typedef int tid_t;
 #define TID_ERROR ((tid_t) - 1) /* Error value for tid_t. */
 
 /* Thread priorities. */
-#define PRI_MIN 0	   /* Lowest priority. */
+#define PRI_MIN 0      /* Lowest priority. */
 #define PRI_DEFAULT 31 /* Default priority. */
-#define PRI_MAX 63	   /* Highest priority. */
+#define PRI_MAX 63     /* Highest priority. */
 
 /* A kernel thread or user process.
  *
@@ -85,37 +84,40 @@ typedef int tid_t;
  * only because they are mutually exclusive: only a thread in the
  * ready state is on the run queue, whereas only a thread in the
  * blocked state is on a semaphore wait list. */
-struct thread
-{
-	/* Shared between thread.c and synch.c. */
-	struct list_elem elem; /* List element. */
+struct thread {
+    /* Shared between thread.c and synch.c. */
+    struct list_elem elem; /* List element. */
 
-	/* Owned by thread.c. */
-	tid_t tid;				   /* Thread identifier. */
-	enum thread_status status; /* Thread state. */
-	char name[16];			   /* Name (for debugging purposes). */
-	int priority;			   /* Priority. */
-	int exit_code;			   /* exit code(process_exit) */
+    /* Owned by thread.c. */
+    tid_t tid;                 /* Thread identifier. */
+    enum thread_status status; /* Thread state. */
+    char name[16];             /* Name (for debugging purposes). */
+    int priority;              /* Priority. */
+    int exit_code;             /* exit code(process_exit) */
 
-	/* Priority donate */
-	int donation_priority;	   /* Priority on donation */
-	struct list holding;	   /* 잡고있는 락 목록 */
-	struct lock *waiting_lock; /* 대기하고있는 락 */
+    /* Priority donate */
+    int donation_priority;     /* Priority on donation */
+    struct list holding;       /* 잡고있는 락 목록 */
+    struct lock *waiting_lock; /* 대기하고있는 락 */
 
-	int wakeup_tick; // 기상 시간
+    int wakeup_tick; // 기상 시간
+
+    /* fd 관리 */
+    int max_fd;                 // fd 최대값
+    struct list open_file_list; // 열려있는 파일 목록
 
 #ifdef USERPROG
-	/* Owned by userprog/process.c. */
-	uint64_t *pml4; /* Page map level 4 */
+    /* Owned by userprog/process.c. */
+    uint64_t *pml4; /* Page map level 4 */
 #endif
 #ifdef VM
-	/* Table for whole virtual memory owned by thread. */
-	struct supplemental_page_table spt;
+    /* Table for whole virtual memory owned by thread. */
+    struct supplemental_page_table spt;
 #endif
 
-	/* Owned by thread.c. */
-	struct intr_frame tf; /* Information for switching */
-	unsigned magic;		  /* Detects stack overflow. */
+    /* Owned by thread.c. */
+    struct intr_frame tf; /* Information for switching */
+    unsigned magic;       /* Detects stack overflow. */
 };
 
 /* If false (default), use round-robin scheduler.
@@ -152,8 +154,6 @@ int thread_get_load_avg(void);
 
 void do_iret(struct intr_frame *tf);
 
-bool greater_priority(const struct list_elem *a,
-					  const struct list_elem *b,
-					  void *aux);
+bool greater_priority(const struct list_elem *a, const struct list_elem *b, void *aux);
 
 #endif /* threads/thread.h */
