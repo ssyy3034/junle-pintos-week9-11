@@ -8,7 +8,10 @@
         "string_view": "c",
         "random": "c",
         "limits": "c",
-        "numeric": "c"
+        "numeric": "c",
+        "*.inc": "c",
+        "cstdlib": "c",
+        "syscall.h": "c"
     },
 
     // ------------------------------------
