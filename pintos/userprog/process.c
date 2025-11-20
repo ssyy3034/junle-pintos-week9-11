@@ -211,7 +211,12 @@ int process_exec(void *f_name)
  * does nothing. */
 int process_wait(tid_t child_tid UNUSED)
 {
-    timer_sleep(200);
+    int w = 200000;
+    while (w > 0)
+    {
+        w--;
+        thread_yield();
+    }
 }
 
 /* Exit the process. This function is called by thread_exit (). */
