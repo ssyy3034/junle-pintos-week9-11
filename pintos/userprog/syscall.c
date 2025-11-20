@@ -18,11 +18,11 @@ void syscall_handler(struct intr_frame *);
 static void sys_halt(void);                                        // 완료
 static void sys_exit(int status);                                  // 완료
 static int sys_write(int fd, const void *buffer, unsigned length); // 완료
-static bool sys_create(const char *file, unsigned initial_size);
-static int sys_open(const char *file);
-static void sys_close(int fd);
-static int sys_read(int fd, void *buffer, unsigned length);
-static int sys_filesize(int fd);
+static bool sys_create(const char *file, unsigned initial_size);   // 완료
+static int sys_open(const char *file);                             // 완료
+static void sys_close(int fd);                                     // 완료
+static int sys_read(int fd, void *buffer, unsigned length);        // 완료
+static int sys_filesize(int fd);                                   // 완료
 
 /* System call.
  *
@@ -55,12 +55,15 @@ void check(void *addr)
         sys_exit(-1);
     }
 }
+
 void check_start_to_end(void *addr, int size)
 {
     check(addr);
     check((char *)addr + size - 1);
 }
+
 struct file **local_fdt;
+
 /* The main system call interface */
 void syscall_handler(struct intr_frame *f UNUSED)
 {
@@ -81,43 +84,40 @@ void syscall_handler(struct intr_frame *f UNUSED)
             break;
 
         case SYS_WRITE:
-
             fd = f->R.rdi;
             buffer = f->R.rsi;
             length = f->R.rdx;
-
             f->R.rax = sys_write(fd, buffer, length);
             break;
 
         case SYS_CREATE:
             file = f->R.rdi;
             initial_size = f->R.rsi;
-
             f->R.rax = sys_create(file, initial_size);
             break;
 
         case SYS_OPEN:
-
             file = f->R.rdi;
-
             f->R.rax = sys_open(file);
             break;
+
         case SYS_CLOSE:
             fd = f->R.rdi;
             sys_close(fd);
             break;
+
         case SYS_READ:
             fd = f->R.rdi;
             buffer = f->R.rsi;
             length = f->R.rdx;
-
             f->R.rax = sys_read(fd, buffer, length);
             break;
+
         case SYS_FILESIZE:
             fd = f->R.rdi;
-
             f->R.rax = sys_filesize(fd);
             break;
+
         default:
             thread_exit();
             break;
@@ -143,11 +143,6 @@ static void sys_exit(int status)
 
 static int sys_write(int fd, const void *buffer, unsigned length)
 {
-    check_start_to_end(buffer, length);
-    if (fd < 0 || fd >= 128)
-    {
-        sys_exit(-1);
-    }
     if (fd == 1)
     {
         putbuf((const char *)buffer, (size_t)length);
@@ -161,6 +156,7 @@ static int sys_write(int fd, const void *buffer, unsigned length)
     }
     return length;
 }
+
 static bool sys_create(const char *file, unsigned initial_size)
 {
     check(file);
@@ -170,6 +166,7 @@ static bool sys_create(const char *file, unsigned initial_size)
     }
     return filesys_create(file, initial_size);
 }
+
 static int sys_open(const char *file)
 {
     check(file);
@@ -204,6 +201,7 @@ static int sys_open(const char *file)
         return open_fd;
     }
 }
+
 static void sys_close(int fd)
 {
     local_fdt = thread_current()->file_descriptor_table;
@@ -219,10 +217,12 @@ static void sys_close(int fd)
 static int sys_read(int fd, void *buffer, unsigned length)
 {
     check_start_to_end(buffer, length);
+
     if (fd < 0 || fd >= 128 || fd == 1)
     {
         sys_exit(-1);
     }
+
     if (fd == 0)
     {
         int size = length;
@@ -234,6 +234,7 @@ static int sys_read(int fd, void *buffer, unsigned length)
         }
         return length;
     }
+
     if (fd >= 2)
     {
         local_fdt = thread_current()->file_descriptor_table;
@@ -244,7 +245,9 @@ static int sys_read(int fd, void *buffer, unsigned length)
         }
         return read_size;
     }
+    return -1;
 }
+
 static int sys_filesize(int fd)
 {
     local_fdt = thread_current()->file_descriptor_table;
