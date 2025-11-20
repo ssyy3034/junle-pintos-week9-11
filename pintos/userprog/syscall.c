@@ -60,7 +60,7 @@ void check_start_to_end(void *addr, int size)
     check(addr);
     check((char *)addr + size - 1);
 }
-
+struct file **local_fdt;
 /* The main system call interface */
 void syscall_handler(struct intr_frame *f UNUSED)
 {
@@ -69,7 +69,6 @@ void syscall_handler(struct intr_frame *f UNUSED)
     unsigned length;
     char *file;
     size_t initial_size;
-    struct file **local_fdt;
 
     switch (f->R.rax)
     {
@@ -155,7 +154,7 @@ static int sys_write(int fd, const void *buffer, unsigned length)
     } else if (fd >= 2)
     {
         off_t written;
-        struct file **local_fdt = thread_current()->file_descriptor_table;
+        local_fdt = thread_current()->file_descriptor_table;
 
         written = file_write(local_fdt[fd], buffer, length);
         return written;
@@ -186,7 +185,7 @@ static int sys_open(const char *file)
         return -1;
     } else
     {
-        struct file **local_fdt = thread_current()->file_descriptor_table;
+        local_fdt = thread_current()->file_descriptor_table;
         int open_fd = -1;
 
         for (int i = 2; i < 128; i++)
@@ -207,7 +206,7 @@ static int sys_open(const char *file)
 }
 static void sys_close(int fd)
 {
-    struct file **local_fdt = thread_current()->file_descriptor_table;
+    local_fdt = thread_current()->file_descriptor_table;
 
     if (fd < 2 || fd >= 128 || local_fdt[fd] == NULL)
     {
@@ -237,7 +236,7 @@ static int sys_read(int fd, void *buffer, unsigned length)
     }
     if (fd >= 2)
     {
-        struct file **local_fdt = thread_current()->file_descriptor_table;
+        local_fdt = thread_current()->file_descriptor_table;
         off_t read_size = file_read(local_fdt[fd], buffer, length);
         if (read_size < 0)
         {
@@ -248,6 +247,6 @@ static int sys_read(int fd, void *buffer, unsigned length)
 }
 static int sys_filesize(int fd)
 {
-    struct file **local_fdt = thread_current()->file_descriptor_table;
+    local_fdt = thread_current()->file_descriptor_table;
     return file_length(local_fdt[fd]);
 }
