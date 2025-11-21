@@ -10,6 +10,7 @@
 #include "filesys/file.h"
 #include "filesys/filesys.h"
 #include "threads/synch.h"
+#include "devices/input.h"
 
 void syscall_entry(void);
 void syscall_handler(struct intr_frame *);
@@ -19,11 +20,12 @@ bool is_valid_addr(const void *u_add);
 static void sys_halt(void);                                      // 완료
 static void sys_exit(int status);                                // 완료
 static bool sys_create(const char *file, unsigned initial_size); // 완료
-static int sys_open(const char *file);
+static int sys_open(const char *file);                           // 완료
 static int sys_read(int fd, void *buffer, unsigned length);
 static int sys_write(int fd, const void *buffer, unsigned length); // 완료
-
+// fd_table 관련 헬퍼함수들 ========
 static int create_fd(struct file *f); // 이거 왜 오류나지. 구조체 때문인듯.
+static struct file *get_file_from_fd(int fd);
 static struct lock lock;
 /* System call.
  *
@@ -126,6 +128,7 @@ static void sys_exit(int status)
     cur->exit_code = status;
     thread_exit();
 }
+
 static bool sys_create(const char *file, unsigned initial_size)
 {
     if (!is_valid_addr(file))
@@ -148,6 +151,9 @@ static bool sys_create(const char *file, unsigned initial_size)
 
 static int sys_open(const char *file)
 {
+    // /* Opens a file for the given INODE, of which it takes ownership,
+    //  * and returns the new file.  Returns a null pointer if an
+    //  * allocation fails or if INODE is null. */
     if (!is_valid_addr(file))
     {
         sys_exit(-1);
@@ -172,14 +178,6 @@ static int sys_open(const char *file)
     // fd_table 할당하는걸 못함
     int new_fd = create_fd(f);
     return new_fd; // 실패하면 -1
-
-    // /* Opens a file for the given INODE, of which it takes ownership,
-    //  * and returns the new file.  Returns a null pointer if an
-    //  * allocation fails or if INODE is null. */
-    // struct file *
-    // file_open (struct inode *inode) {
-
-    // struct file *filesys_open(const char *name)
 }
 
 static int sys_read(int fd, void *buffer, unsigned length)
@@ -188,42 +186,103 @@ static int sys_read(int fd, void *buffer, unsigned length)
     {
         sys_exit(-1);
     }
-    if (fd == 0)
+    uint8_t *buf = (uint8_t *)buffer; // [!] void타입 포인터는 사이즈 알 수 없어 값 넣기/수정불가
+    if (fd == 0)                      // 키보드
     {
+        for (int i = 0; i < length; i++)
+        {
+            uint8_t key = input_getc();
+            buf[i] = key; // buffer[i] = key; -> void타입 포인터에는 값을 집어넣을 수 없음
+        }
+        return length;
         /*
             Reads SIZE bytes from FILE into BUFFER,
             * starting at offset FILE_OFS in the file.
             * Returns the number of bytes actually read,
 
-            off_t
-            file_read (struct file *file, void *buffer, off_t size);
+            Returns the number of bytes actually read (0 at end of file),
+            or -1 if the file could not be read (due to a condition other than end of file).
+            fd 0 reads from the keyboard using input_getc().
 
-            >> 문제: file을 넘겨야하는데 fd밖에 없다.
+        - `read()`는 열려 있는 파일(fd)에서
+            size 바이트만큼 데이터를 읽어서 buffer에 넣는다.
+
+        - 반환값은 **실제로 읽은 바이트 수**다.
+        - 파일의 끝(EOF)에 도달하면
+            → 0을 반환한다.
+
+        - 읽을 수 없는 다른 오류(파일이 없거나, 읽기 불가능한 상황 등)가 발생하면
+            → -1을 반환한다.
+
+        - fd = 0 은 키보드(stdin)를 의미한다.
+            이 경우 읽기는 `input_getc()`를 사용해 한 글자씩 받아와야 한다.
+        Reads SIZE bytes from FILE into BUFFER,
+        * starting at the file's current position.
+        * Returns the number of bytes actually read,
+        * which may be less than SIZE if end of file is reached.
+        * Advances FILE's position by the number of bytes read.
+
+        off_t file_read(struct file *file, void *buffer, off_t size)
+        {
+            off_t bytes_read = inode_read_at(file->inode, buffer, size, file->pos);
+            file->pos += bytes_read;
+            return bytes_read;
+        }
+
         */
-
-        // 처리
-        // off_t
-        // file_read (struct file *file, void *buffer, off_t size) {
-        // 		off_t bytes_read = inode_read_at (file->inode, buffer, size, file->pos);
-        // 		file->pos += bytes_read;
-        // 		return bytes_read;
-        // }
-        // 파일 구조체를 불러와야한다.
+    } else
+    {
+        // 1) 파일 불러오기
+        struct file *f = get_file_from_fd(fd);
+        // 2) length만큼 읽기 (file --> buffer)
+        off_t read_bytes = file_read(f, buffer, length); // off_t <=> int
+        // #) 반환: 실제로 읽은 Byte수
+        if (read_bytes == NULL)
+        {
+            return -1;
+        } else if (read_bytes < length)
+        { // EOF 도달해서 다 못 읽은 거 아닌지?
+            return 0;
+        }
+        return read_bytes;
     }
 }
 
 static int sys_write(int fd, const void *buffer, unsigned length)
 {
-    if (!is_valid_addr(buffer))
+    if (!is_valid_addr(buffer)) // 끝도 확인하긴해야하는데..
     {
         sys_exit(-1);
     }
-    if (fd == 1)
+    if (fd == 0 || fd == NULL)
+    {
+        return -1;
+    } else if (fd == 1)
     {
         putbuf((const char *)buffer, (size_t)length);
+        return length; // 수백바이트 이상이면 한번의 putbuf호출로 전체 버퍼 출력해야하는데
+                       //  그거 구현 어떻게해야할지
+    } else
+    {
+        struct file *f = get_file_from_fd(fd);
+        if (f == NULL)
+        {
+            return -1;
+        }
+        off_t len = file_write(f, buffer, length); // file_write(): 쓰인 바이트수만 반환
+        return (int)len;
     }
-    // fd >= 2인 경우도 확인해야함
-    return length;
+    // 추가사항: 권한 확인(쓰기가능파일인지), 콘솔 출력시, size>=1000Byte면 여러번 나눠서 출력하도록,
+    /*
+        char buf = 123;
+        write(0x01012342, &buf, 1);
+        write(7, &buf, 1);
+        write(2546, &buf, 1);
+        write(-5, &buf, 1);
+        write(-8192, &buf, 1);
+        write(INT_MIN + 1, &buf, 1);
+        write(INT_MAX - 1, &buf, 1);
+    */
 }
 // user v_memory access ========================
 bool is_valid_addr(const void *u_add)
@@ -248,19 +307,21 @@ static int create_fd(struct file *f) // 현재 프로세스의 fd_table 중 빈 
     {
         if (ft[i] == NULL)
         {
-            // printf("\n\n4 : %d\n\n", i);
             ft[i] = f;
-            // printf("%p", &current_t->fd_table[i]);
             return i;
         }
     }
     return -1;
 } // struct file **fd_table;
-// 프로세스(=스레드)마다 선언할 fd-table 구조체 ========
-// struct fd_table {
-//     struct fd_entry *fd_entries[128]; // 인덱스를 fd로 쓰면 안되나?(0,1 빼고) >> 동적할당으로 바꾸면 어케해야할짙ㄴ
-// };
-// struct fd_entry {
-//     int fd;
-//     struct file *file;
-// };
+
+static struct file *get_file_from_fd(int fd)
+{
+    if (fd < FD_MIN || fd > FD_MAX)
+    {
+        return NULL;
+    }
+    struct thread *cur_thread = thread_current();
+    struct file **fdt = cur_thread->fd_table;
+
+    return fdt[fd];
+}
