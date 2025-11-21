@@ -19,6 +19,7 @@ void syscall_entry(void);
 void syscall_handler(struct intr_frame *);
 
 // syscall 함수들 ========
+<<<<<<< HEAD
 static void sys_halt(void);                                        // 완료
 static void sys_exit(int status);                                  // 완료
 static bool sys_create(const char *file, unsigned initial_size);   // 완료
@@ -28,9 +29,18 @@ static int sys_read(int fd, void *buffer, unsigned size);          // 완료
 static int sys_write(int fd, const void *buffer, unsigned length); // 완료
 static void close(int fd);
 
+=======
+static void sys_halt(void);                                      // 완료
+static void sys_exit(int status);                                // 완료
+static bool sys_create(const char *file, unsigned initial_size); // 완료
+static int sys_open(const char *file);                           // 완료
+static int sys_read(int fd, void *buffer, unsigned length);
+static int sys_write(int fd, const void *buffer, unsigned length); // 완료
+>>>>>>> origin/main
 // helper 함수들 ========
 void check_valid_addr(void *addr);
 static int create_fd(struct file *f);
+static struct file *get_file_from_fd(int fd);
 
 struct file **local_fdt;
 
@@ -97,6 +107,7 @@ void syscall_handler(struct intr_frame *f UNUSED)
 
             f->R.rax = sys_open(file);
             break;
+<<<<<<< HEAD
         case SYS_FILESIZE:
             /*
                 fd로 열린 파일의 크기를 바이트 단위로 반환
@@ -110,6 +121,15 @@ void syscall_handler(struct intr_frame *f UNUSED)
             fd = f->R.rdi;
             buffer = f->R.rsi;
             initial_size = f->R.rdx;
+=======
+        case SYS_READ:
+            fd = f->R.rdi;
+            buffer = f->R.rsi;
+            length = f->R.rdx;
+
+            f->R.rax = sys_read(fd, buffer, length);
+            break;
+>>>>>>> origin/main
 
             f->R.rax = sys_read(fd, buffer, initial_size);
             break;
@@ -183,6 +203,7 @@ static int sys_open(const char *file)
     return fd;
 }
 
+<<<<<<< HEAD
 /*
     fd 로 파일 찾아서 그 파일의 크기 리턴
     file_length(file) 사용
@@ -236,26 +257,68 @@ int sys_read(int fd, void *buffer, unsigned size)
         result = -1;
     }
     return result;
+=======
+static int sys_read(int fd, void *buffer, unsigned length)
+{
+    check_valid_addr(buffer);
+    check_valid_addr(buffer + length - 1);
+
+    uint8_t *buf = (uint8_t *)buffer; // [!] void타입 포인터는 사이즈 알 수 없어 값 넣기/수정불가
+
+    if (fd == 0) // 키보드
+    {
+        for (int i = 0; i < length; i++)
+        {
+            uint8_t key = input_getc();
+            buf[i] = key;
+        }
+        return length;
+
+    } else if (fd == 1)
+    {
+        return -1;
+    } else
+    {
+        // 1) 파일 불러오기
+        struct file *f = get_file_from_fd(fd);
+        if (f == NULL)
+        {
+            return -1;
+        }
+        // 2) length만큼 읽기 (file --> buffer)
+        off_t read_bytes = file_read(f, buffer, (int)length); // 읽은 바이트수 반환
+        return (int)read_bytes;
+    }
+>>>>>>> origin/main
 }
 
 static int sys_write(int fd, const void *buffer, unsigned length)
 {
-    if (fd == 1)
+    check_valid_addr(buffer);
+
+    if (fd == 0 || fd == NULL)
+    {
+        return -1;
+    } else if (fd == 1)
     {
         putbuf((const char *)buffer, (size_t)length);
-    }
-    return length;
+        return length; // 수백바이트 이상이면 한번의 putbuf호출로 전체 버퍼 출력해야하는데
+                       //  그거 구현 어떻게해야할지
+    } 
+    // 추가사항: 권한 확인(쓰기가능파일인지), 콘솔 출력시, size>=1000Byte면 여러번 나눠서 출력하도록,
 }
 
 // helper 함수들 =====
-void check_valid_addr(void *addr)
+void check_valid_addr(void *addr) // 유효한 주소인지 확인 후 처리
 {
+    // 1) 주소값이 NULL은 아닌지 2)주소가 유저가상메모리영역인지 3)p_table에 존재하는지
     if (addr == NULL || !is_user_vaddr(addr) || pml4_get_page(thread_current()->pml4, addr) == NULL)
     {
         sys_exit(-1);
     }
 }
-static int create_fd(struct file *f)
+
+static int create_fd(struct file *f) // 해당 파일용 fd를 만들어 fd_table에 저장
 {
     local_fdt = thread_current()->file_descriptor_table;
 
@@ -269,4 +332,15 @@ static int create_fd(struct file *f)
     }
     file_close(f);
     return -1;
+}
+
+static struct file *get_file_from_fd(int fd) // fd로부터 파일 받기(유효검사도같이)
+{
+    local_fdt = thread_current()->file_descriptor_table;
+
+    if (fd < FD_MIN || fd > FD_MAX || local_fdt[fd] == NULL)
+    {
+        return NULL;
+    }
+    return local_fdt[fd];
 }

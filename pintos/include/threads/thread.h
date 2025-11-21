@@ -9,6 +9,7 @@
 #ifdef VM
 #include "vm/vm.h"
 #endif
+#include "filesys/file.h"
 
 /* States in a thread's life cycle. */
 enum thread_status {
@@ -85,6 +86,8 @@ typedef int tid_t;
  * only because they are mutually exclusive: only a thread in the
  * ready state is on the run queue, whereas only a thread in the
  * blocked state is on a semaphore wait list. */
+
+// =============================================
 struct thread {
     /* Owned by thread.c. */
     tid_t tid;                 /* Thread identifier. */
