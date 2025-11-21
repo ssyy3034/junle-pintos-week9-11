@@ -29,7 +29,8 @@ void check_valid_addr(void *addr);
 static int create_fd(struct file *f);
 
 struct file **local_fdt;
-struct lock *file_lock;
+
+static struct lock file_lock;
 /* System call.
  *
  * Previously system call services was handled by the interrupt handler
@@ -67,7 +68,6 @@ void syscall_handler(struct intr_frame *f UNUSED)
     char *file;
     size_t initial_size;
 
-    printf("\n\n\ngdasfdsf\n\n\n");
     // 2) syscall 번호별 인자개수만큼 받고 actions 처리 ========
     switch (syscall_no)
     {
