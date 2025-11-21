@@ -3,13 +3,17 @@
     // 1. (기존) 파일 연관 설정
     // ------------------------------------
     "files.associations": {
-        "bit": "c",
-        "functional": "c",
-        "string_view": "c",
-        "random": "c",
-        "limits": "c",
-        "numeric": "c"
-    },
+		"bit": "c",
+		"functional": "c",
+		"string_view": "c",
+		"random": "c",
+		"limits": "c",
+		"numeric": "c",
+		"inode.h": "c",
+		"file.h": "c",
+		"synch.h": "c",
+		"*.inc": "c"
+	},
 
     // ------------------------------------
     // 2. (기존) 자동 포맷팅 (clang-format)
