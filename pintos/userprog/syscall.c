@@ -170,8 +170,7 @@ static int sys_open(const char *file)
 static int sys_read(int fd, void *buffer, unsigned length)
 {
     check_valid_addr(buffer);
-    if (length > 0)
-        check_valid_addr(buffer + length);
+    check_valid_addr(buffer + length - 1);
 
     uint8_t *buf = (uint8_t *)buffer; // [!] void타입 포인터는 사이즈 알 수 없어 값 넣기/수정불가
 
@@ -213,16 +212,7 @@ static int sys_write(int fd, const void *buffer, unsigned length)
         putbuf((const char *)buffer, (size_t)length);
         return length; // 수백바이트 이상이면 한번의 putbuf호출로 전체 버퍼 출력해야하는데
                        //  그거 구현 어떻게해야할지
-    } else
-    {
-        struct file *f = get_file_from_fd(fd);
-        if (f == NULL)
-        {
-            return -1;
-        }
-        off_t len = file_write(f, buffer, length); // file_write(): 쓰인 바이트수만 반환
-        return len;
-    }
+    } 
     // 추가사항: 권한 확인(쓰기가능파일인지), 콘솔 출력시, size>=1000Byte면 여러번 나눠서 출력하도록,
 }
 
