@@ -5,6 +5,7 @@
 #include <list.h>
 #include <stdint.h>
 #include "threads/interrupt.h"
+#include "filesys/file.h"
 #ifdef VM
 #include "vm/vm.h"
 #endif
@@ -108,7 +109,8 @@ struct thread {
     int original_priority;
     struct lock *waiting_lock;
 
-    int exit_code; // exit()호출되면 남김
+    int exit_code;                       // exit()호출되면 남김
+    struct file **file_descriptor_table; // fd-table
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
