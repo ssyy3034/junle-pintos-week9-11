@@ -10,6 +10,8 @@
 #include "threads/init.h"
 #include "filesys/file.h"
 #include "filesys/filesys.h"
+#include "userprog/process.h"
+#define CONSOLE_WRITE_LIMIT 256
 
 void syscall_entry(void);
 void syscall_handler(struct intr_frame *);
@@ -23,6 +25,7 @@ static int sys_open(const char *file);                             // 완료
 static void sys_close(int fd);                                     // 완료
 static int sys_read(int fd, void *buffer, unsigned length);        // 완료
 static int sys_filesize(int fd);                                   // 완료
+static tid_t sys_process_fork(const char *name, struct intr_frame *if_);
 
 /* System call.
  *
@@ -48,6 +51,13 @@ void syscall_init(void)
     write_msr(MSR_SYSCALL_MASK, FLAG_IF | FLAG_TF | FLAG_DF | FLAG_IOPL | FLAG_AC | FLAG_NT);
 }
 
+void check_valid_fd(int fd)
+{
+    if (fd < 0 || fd >= 128 || fd == 1)
+    {
+        sys_exit(-1);
+    }
+}
 void check(void *addr)
 {
     if (addr == NULL || !is_user_vaddr(addr) || pml4_get_page(thread_current()->pml4, addr) == NULL)
@@ -118,6 +128,8 @@ void syscall_handler(struct intr_frame *f UNUSED)
             f->R.rax = sys_filesize(fd);
             break;
 
+        case SYS_FORK:
+
         default:
             thread_exit();
             break;
@@ -143,18 +155,34 @@ static void sys_exit(int status)
 
 static int sys_write(int fd, const void *buffer, unsigned length)
 {
+    check_start_to_end(buffer, length);
+    check_valid_fd(fd);
+
     if (fd == 1)
     {
-        putbuf((const char *)buffer, (size_t)length);
+        const char *ptr = (const char *)buffer;
+        unsigned remaining = length;
+
+        while (remaining > 0)
+        {
+            size_t chunk_size = (remaining > CONSOLE_WRITE_LIMIT) ? CONSOLE_WRITE_LIMIT : remaining;
+            putbuf(ptr, chunk_size);
+            ptr += chunk_size;
+            remaining -= chunk_size;
+        }
+        return length;
     } else if (fd >= 2)
     {
-        off_t written;
-        local_fdt = thread_current()->file_descriptor_table;
+        struct thread *curr = thread_current();
+        struct file **local_fdt = curr->file_descriptor_table;
 
-        written = file_write(local_fdt[fd], buffer, length);
-        return written;
+        if (local_fdt[fd] == NULL)
+        {
+            return -1;
+        }
+        return file_write(local_fdt[fd], buffer, length);
     }
-    return length;
+    return -1;
 }
 
 static bool sys_create(const char *file, unsigned initial_size)
@@ -204,9 +232,9 @@ static int sys_open(const char *file)
 
 static void sys_close(int fd)
 {
+    check_valid_fd(fd);
     local_fdt = thread_current()->file_descriptor_table;
-
-    if (fd < 2 || fd >= 128 || local_fdt[fd] == NULL)
+    if (local_fdt[fd] == NULL)
     {
         sys_exit(-1);
     }
@@ -217,11 +245,7 @@ static void sys_close(int fd)
 static int sys_read(int fd, void *buffer, unsigned length)
 {
     check_start_to_end(buffer, length);
-
-    if (fd < 0 || fd >= 128 || fd == 1)
-    {
-        sys_exit(-1);
-    }
+    check_valid_fd(fd);
 
     if (fd == 0)
     {
@@ -252,4 +276,9 @@ static int sys_filesize(int fd)
 {
     local_fdt = thread_current()->file_descriptor_table;
     return file_length(local_fdt[fd]);
+}
+static tid_t sys_process_fork(const char *name, struct intr_frame *if_)
+{
+    int tid;
+    tid = process_fork(name, if_);
 }

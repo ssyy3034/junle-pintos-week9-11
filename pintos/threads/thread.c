@@ -90,7 +90,7 @@ static uint64_t gdt[3] = {0, 0x00af9a000000ffff, 0x00cf92000000ffff};
    allocator before trying to create any threads with
    thread_create().
 
-   It is not safe to call thread_current() until this function
+   It is not safe to call thread_current() until this functions
    finishes. */
 void thread_init(void)
 {
