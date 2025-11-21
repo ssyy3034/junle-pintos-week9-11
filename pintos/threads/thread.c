@@ -186,8 +186,6 @@ tid_t thread_create(const char *name, int priority, thread_func *function, void 
     if (t == NULL)
         return TID_ERROR;
 
-    // printf("%p\n\n", t->fd_table);
-
     /* Initialize thread. */
     init_thread(t, name, priority);
     tid = t->tid = allocate_tid();
