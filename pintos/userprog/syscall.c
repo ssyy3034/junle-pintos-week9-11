@@ -30,8 +30,6 @@ void check_valid_addr(void *addr);
 static int create_fd(struct file *f);
 static struct file *get_file_from_fd(int fd);
 
-struct file **local_fdt;
-
 static struct lock file_lock;
 /* System call.
  *
@@ -40,7 +38,7 @@ static struct lock file_lock;
  * efficient path for requesting the system call, the `syscall` instruction.
  *
  * The syscall instruction works by reading the values from the the Model
- * Specific Register (MSR). For the details, see the manual. */
+ * Specific Register (MSR). For the details, see the manua₩l. */
 
 #define MSR_STAR 0xc0000081         /* Segment selector msr */
 #define MSR_LSTAR 0xc0000082        /* Long mode SYSCALL target */
@@ -212,7 +210,7 @@ static int sys_write(int fd, const void *buffer, unsigned length)
         putbuf((const char *)buffer, (size_t)length);
         return length; // 수백바이트 이상이면 한번의 putbuf호출로 전체 버퍼 출력해야하는데
                        //  그거 구현 어떻게해야할지
-    } 
+    }
     // 추가사항: 권한 확인(쓰기가능파일인지), 콘솔 출력시, size>=1000Byte면 여러번 나눠서 출력하도록,
 }
 
@@ -228,7 +226,7 @@ void check_valid_addr(void *addr) // 유효한 주소인지 확인 후 처리
 
 static int create_fd(struct file *f) // 해당 파일용 fd를 만들어 fd_table에 저장
 {
-    local_fdt = thread_current()->file_descriptor_table;
+    struct file **local_fdt = thread_current()->file_descriptor_table;
 
     for (int i = FD_MIN; i < FD_MAX; i++)
     {
@@ -244,7 +242,7 @@ static int create_fd(struct file *f) // 해당 파일용 fd를 만들어 fd_tabl
 
 static struct file *get_file_from_fd(int fd) // fd로부터 파일 받기(유효검사도같이)
 {
-    local_fdt = thread_current()->file_descriptor_table;
+    struct file **local_fdt = thread_current()->file_descriptor_table;
 
     if (fd < FD_MIN || fd > FD_MAX || local_fdt[fd] == NULL)
     {
