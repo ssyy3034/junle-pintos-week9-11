@@ -9,11 +9,12 @@ create-bound PASS
 read-normal FAIL
 open-empty PASS
 open-null PASS
-args-none FAIL
+close-twice PASS
+args-none PASS
 create-bad-ptr PASS
 read-stdout PASS
 read-boundary PASS
-close-normal FAIL
+close-normal PASS
 halt PASS
 write-bad-fd PASS
 open-boundary PASS
@@ -21,6 +22,7 @@ create-null PASS
 open-bad-ptr PASS
 write-normal PASS
 write-boundary PASS
+close-bad-fd PASS
 exit PASS
 write-bad-ptr PASS
 args-many PASS
