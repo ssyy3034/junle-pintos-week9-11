@@ -114,7 +114,7 @@ struct thread {
     /* Owned by userprog/process.c. */
     uint64_t *pml4; /* Page map level 4 */
     // fd_table ==========
-    struct file **fd_table;
+    struct file **fd_table; //*
 #endif
 #ifdef VM
     /* Table for whole virtual memory owned by thread. */
