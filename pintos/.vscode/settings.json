@@ -26,7 +26,8 @@
         "array": "c",
         "initializer_list": "c",
         "thread.h": "c",
-        "atomic": "c"
+        "atomic": "c",
+        "interrupt.h": "c"
     },
 
     // ------------------------------------

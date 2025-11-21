@@ -1,13 +1,18 @@
 args-dbl-space PASS
+read-bad-fd FAIL
 args-multiple PASS
 create-normal PASS
 open-twice PASS
+read-bad-ptr PASS
 create-long PASS
 create-bound PASS
+read-normal FAIL
 open-empty PASS
 open-null PASS
 args-none PASS
 create-bad-ptr PASS
+read-stdout FAIL
+read-boundary PASS
 halt PASS
 open-boundary PASS
 create-null PASS
@@ -19,3 +24,4 @@ open-normal PASS
 open-missing PASS
 create-empty PASS
 args-single PASS
+read-zero PASS

@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <debug.h>
 #include <stddef.h>
-#include <list.h>
 
 /* Process identifier. */
 typedef int pid_t;

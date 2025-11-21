@@ -10,6 +10,8 @@
 #include "filesys/filesys.h"
 #include "threads/synch.h"
 #include "threads/palloc.h"
+#include "filesys/file.h"
+#include "filesys/filesys.h"
 
 void syscall_entry(void);
 void syscall_handler(struct intr_frame *);
@@ -22,18 +24,12 @@ void halt();
 void exit(int status);
 bool create(const char *file, unsigned initial_size);
 int open(const char *file);
+int filesize(int fd);
 int read(int fd, void *buffer, unsigned size);
 int write(int fd, const void *buffer, unsigned size);
 
 /* file_sys 접근하기 위한 락 */
 static struct lock file_lock;
-
-/* fd - file 매핑 구조체 -> thread에서 list로 관리 */
-struct fd_mapped {
-    struct list_elem elem; /* List element. */
-    int fd;
-    struct file *file;
-};
 
 /* System call.
  *
@@ -131,7 +127,15 @@ void syscall_handler(struct intr_frame *f UNUSED)
             }
             f->R.rax = open(file);
             break;
-
+        case SYS_FILESIZE:
+            /*
+                fd로 열린 파일의 크기를 바이트 단위로 반환
+                input : fd
+                return : byte
+            */
+            fd = f->R.rdi;
+            f->R.rax = filesize(fd);
+            break;
         case SYS_READ:
             fd = f->R.rdi;
             buffer = f->R.rsi;
@@ -142,7 +146,6 @@ void syscall_handler(struct intr_frame *f UNUSED)
             {
                 exit(-1);
             }
-
             f->R.rax = read(fd, buffer, size);
             break;
         case SYS_WRITE:
@@ -220,9 +223,10 @@ int open(const char *file)
         구현
         1. filesys의 filesys_open()으로 file 열고, file 구조체 리턴받음
             -> open() 실패하면 null포인터 리턴 -> null포인터면 open도 -1리턴
-        2. 리턴받은 파일 + fd++ 매핑해서 fd_mapped 구조체 선언
-            -> fd는 프로세스별로 관리. 새로운 fd 발급시마다 1 증가해서 발급
-        3. fd_mapped를 현재 쓰레드의 fd_list에 추가
+        2. 리턴받은 파일 을 쓰레드의 fd_list에 추가(이건 함수 파서 해도될듯?)
+            -> 함수에서 list first-fit으로 순회하며 NULL인곳에 추가
+            -> fd는 fd_list를 가리키는 index
+            -> 추가하는 순간 fd 리턴
     */
 
     lock_acquire(&file_lock);
@@ -234,17 +238,21 @@ int open(const char *file)
         return -1;
     }
 
-    struct thread *curr = thread_current();
+    int fd = thread_open_file(open_file);
+    return fd;
+}
 
-    // fd-file 매핑
-    struct fd_mapped *mapper = palloc_get_page(PAL_ZERO);
-    mapper->fd = curr->max_fd++;
-    mapper->file = open_file;
+int filesize(int fd)
+{
+    /*
+        fd 로 파일 찾아서 그 파일의 크기 리턴
+        file_length(file) 사용
+    */
+    lock_acquire(&file_lock);
+    int result = file_length(thread_current()->file_list[fd]);
+    lock_release(&file_lock);
 
-    // 현재 쓰레드의 열린파일목록에 추가
-    list_push_back(&curr->open_file_list, &mapper->elem);
-
-    return mapper->fd;
+    return result;
 }
 
 int read(int fd, void *buffer, unsigned size)
@@ -253,6 +261,26 @@ int read(int fd, void *buffer, unsigned size)
         - fd로 열린 파일을 size 바이트를 읽어 buffer에 저장
         - fd가 0일 경우 키보드 입력. 이때는 input_getc()를 통해 읽음
     */
+    char *buf = buffer;
+    int result = 0;
+    if (fd == 0)
+    {
+        for (int i = 0; i < size; i++)
+        {
+            buf[i] = input_getc();
+        }
+        result = size;
+    } else
+    {
+        /*
+            1. fd로 열린 파일 체크
+            2. 어디서부터 읽는거지?
+        */
+        struct file *file = thread_current()->file_list[fd];
+        result = file_read(file, buffer, size);
+    }
+    printf("result [hdh] : %d\n", result);
+    return result;
 }
 
 int write(int fd, const void *buffer, unsigned size)

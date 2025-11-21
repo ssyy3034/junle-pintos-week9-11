@@ -5,6 +5,7 @@
 #include <list.h>
 #include <stdint.h>
 #include "threads/interrupt.h"
+#include "filesys/file.h"
 #ifdef VM
 #include "vm/vm.h"
 #endif
@@ -26,6 +27,8 @@ typedef int tid_t;
 #define PRI_MIN 0      /* Lowest priority. */
 #define PRI_DEFAULT 31 /* Default priority. */
 #define PRI_MAX 63     /* Highest priority. */
+
+#define MAX_FILES 128 /* 최대 open가능한 파일 수 */
 
 /* A kernel thread or user process.
  *
@@ -103,8 +106,7 @@ struct thread {
     int wakeup_tick; // 기상 시간
 
     /* fd 관리 */
-    int max_fd;                 // fd 최대값
-    struct list open_file_list; // 열려있는 파일 목록
+    struct file *file_list[MAX_FILES]; // 열려있는 파일 목록
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
@@ -155,5 +157,5 @@ int thread_get_load_avg(void);
 void do_iret(struct intr_frame *tf);
 
 bool greater_priority(const struct list_elem *a, const struct list_elem *b, void *aux);
-
+int thread_open_file(struct file *file);
 #endif /* threads/thread.h */

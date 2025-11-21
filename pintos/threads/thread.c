@@ -502,8 +502,6 @@ static void init_thread(struct thread *t, const char *name, int priority)
     t->priority = priority;
     t->magic = THREAD_MAGIC;
     list_init(&t->holding);
-    list_init(&t->open_file_list);
-    t->max_fd = 2;
     t->waiting_lock = NULL;
     t->donation_priority = priority;
 }
@@ -699,4 +697,23 @@ static tid_t allocate_tid(void)
     lock_release(&tid_lock);
 
     return tid;
+}
+
+/* add open_file and return fd */
+int thread_open_file(struct file *file)
+{
+    /*
+        쓰레드가 갖고있는 파일목록을 조회해 비어있는 index에
+        파일 넣고 index(fd)를 리턴
+    */
+    struct thread *curr = thread_current();
+    for (int i = 3; i < MAX_FILES; i++)
+    {
+        if (curr->file_list[i] == NULL)
+        {
+            curr->file_list[i] = file;
+            return i;
+        }
+    }
+    return -1;
 }
