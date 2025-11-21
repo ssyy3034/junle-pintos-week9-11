@@ -36,7 +36,6 @@ static int sys_exec(const char *file);
 void check_valid_addr(void *addr);
 static int create_fd(struct file *f);
 static struct file *get_file_from_fd(int fd);
-
 static struct lock file_lock;
 /* System call.
  *
