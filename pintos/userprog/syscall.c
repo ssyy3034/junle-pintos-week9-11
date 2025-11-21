@@ -23,14 +23,13 @@ static void sys_halt(void);                                      // 완료
 static void sys_exit(int status);                                // 완료
 static bool sys_create(const char *file, unsigned initial_size); // 완료
 static int sys_open(const char *file);                           // 완료
-static int sys_read(int fd, void *buffer, unsigned length);
-static int sys_write(int fd, const void *buffer, unsigned length); // 완료
+static int sys_read(int fd, void *buffer, unsigned length);      // 완료
+static int sys_write(int fd, const void *buffer, unsigned length);
+static void sys_close(int fd);
 // helper 함수들 ========
 void check_valid_addr(void *addr);
 static int create_fd(struct file *f);
 static struct file *get_file_from_fd(int fd);
-
-struct file **local_fdt;
 
 static struct lock file_lock;
 /* System call.
@@ -59,10 +58,10 @@ void syscall_init(void)
 }
 
 /* The main system call interface */
-void syscall_handler(struct intr_frame *f UNUSED)
+void syscall_handler(struct intr_frame *if_ UNUSED)
 {
     // 1) syscall 번호 받기 ========
-    uint64_t syscall_no = f->R.rax;
+    uint64_t syscall_no = if_->R.rax;
     int fd;
     int status;
     void *buffer;
@@ -78,37 +77,42 @@ void syscall_handler(struct intr_frame *f UNUSED)
             break;
 
         case SYS_EXIT:
-            status = f->R.rdi;
+            status = if_->R.rdi;
 
             sys_exit(status);
             break;
 
         case SYS_CREATE:
-            file = f->R.rdi;
-            initial_size = f->R.rsi;
+            file = if_->R.rdi;
+            initial_size = if_->R.rsi;
 
-            f->R.rax = sys_create(file, initial_size);
+            if_->R.rax = sys_create(file, initial_size);
             break;
 
         case SYS_OPEN:
-            file = f->R.rdi;
+            file = if_->R.rdi;
 
-            f->R.rax = sys_open(file);
+            if_->R.rax = sys_open(file);
             break;
         case SYS_READ:
-            fd = f->R.rdi;
-            buffer = f->R.rsi;
-            length = f->R.rdx;
+            fd = if_->R.rdi;
+            buffer = if_->R.rsi;
+            length = if_->R.rdx;
 
-            f->R.rax = sys_read(fd, buffer, length);
+            if_->R.rax = sys_read(fd, buffer, length);
             break;
 
         case SYS_WRITE:
-            fd = f->R.rdi;
-            buffer = f->R.rsi;
-            length = f->R.rdx;
+            fd = if_->R.rdi;
+            buffer = if_->R.rsi;
+            length = if_->R.rdx;
 
-            f->R.rax = sys_write(fd, buffer, length);
+            if_->R.rax = sys_write(fd, buffer, length);
+            break;
+        case SYS_CLOSE:
+            fd = if_->R.rdi;
+
+            sys_close(fd);
             break;
 
         default:
@@ -210,10 +214,17 @@ static int sys_write(int fd, const void *buffer, unsigned length)
     } else if (fd == 1)
     {
         putbuf((const char *)buffer, (size_t)length);
-        return length; // 수백바이트 이상이면 한번의 putbuf호출로 전체 버퍼 출력해야하는데
-                       //  그거 구현 어떻게해야할지
-    } 
-    // 추가사항: 권한 확인(쓰기가능파일인지), 콘솔 출력시, size>=1000Byte면 여러번 나눠서 출력하도록,
+        return length;
+    }
+}
+/* fd로 들어온 파일 디스크립터를 닫는다 */
+static void sys_close(int fd)
+{
+    struct file *target_file = get_file_from_fd(fd);
+    if (target_file != NULL)
+    {
+        file_close(target_file);
+    }
 }
 
 // helper 함수들 =====
@@ -228,7 +239,7 @@ void check_valid_addr(void *addr) // 유효한 주소인지 확인 후 처리
 
 static int create_fd(struct file *f) // 해당 파일용 fd를 만들어 fd_table에 저장
 {
-    local_fdt = thread_current()->file_descriptor_table;
+    struct file **local_fdt = thread_current()->file_descriptor_table;
 
     for (int i = FD_MIN; i < FD_MAX; i++)
     {
@@ -244,7 +255,7 @@ static int create_fd(struct file *f) // 해당 파일용 fd를 만들어 fd_tabl
 
 static struct file *get_file_from_fd(int fd) // fd로부터 파일 받기(유효검사도같이)
 {
-    local_fdt = thread_current()->file_descriptor_table;
+    struct file **local_fdt = thread_current()->file_descriptor_table;
 
     if (fd < FD_MIN || fd > FD_MAX || local_fdt[fd] == NULL)
     {
