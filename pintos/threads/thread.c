@@ -190,7 +190,6 @@ tid_t thread_create(const char *name, int priority, thread_func *function, void 
     init_thread(t, name, priority);
     tid = t->tid = allocate_tid();
     // fd table init =======
-    t->fd_table = palloc_get_page(PAL_ZERO);
 
     t->file_descriptor_table = palloc_get_page(PAL_ZERO); // fd-table 할당
     /* Call the kernel_thread if it scheduled.
