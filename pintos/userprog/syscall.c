@@ -17,8 +17,7 @@
 
 void syscall_entry(void);
 void syscall_handler(struct intr_frame *);
-// 추가한 헬퍼함수들 ========
-bool is_valid_addr(const void *u_add);
+
 // syscall 함수들 ========
 static void sys_halt(void);                                      // 완료
 static void sys_exit(int status);                                // 완료
@@ -26,8 +25,6 @@ static bool sys_create(const char *file, unsigned initial_size); // 완료
 static int sys_open(const char *file);                           // 완료
 static int sys_read(int fd, void *buffer, unsigned length);
 static int sys_write(int fd, const void *buffer, unsigned length); // 완료
-static bool sys_create(const char *file, unsigned initial_size);   // 완료
-static int sys_open(const char *file);                             // 완료
 // helper 함수들 ========
 void check_valid_addr(void *addr);
 static int create_fd(struct file *f);
@@ -162,57 +159,6 @@ static int sys_open(const char *file)
     return fd;
 }
 
-static bool sys_create(const char *file, unsigned initial_size)
-{
-    if (!is_valid_addr(file))
-    {
-        sys_exit(-1);
-    }
-    // filesys 접근할때 락 걸기
-    lock_acquire(&lock);
-    if (filesys_create(file, initial_size))
-    { //: Creates a file named NAME with the given INITIAL_SIZE.
-        lock_release(&lock);
-        return 1;
-    } //> filesys_create()에서 file name == '\0' (empty여부) 확인해줌
-    else
-    {
-        lock_release(&lock);
-        return 0;
-    }
-}
-
-static int sys_open(const char *file)
-{
-    // /* Opens a file for the given INODE, of which it takes ownership,
-    //  * and returns the new file.  Returns a null pointer if an
-    //  * allocation fails or if INODE is null. */
-    if (!is_valid_addr(file))
-    {
-        sys_exit(-1);
-    }
-    // 남은것: lock구현해야한다는데 어케하지
-    if (file == NULL)
-    {
-        sys_exit(-1);
-    } else if (file == "")
-    {
-        return -1;
-    }
-    // file 이름으로 file 열기(filesys_open()) + 파일구조체 받기(inode포함)
-    lock_acquire(&lock);
-    struct file *f = filesys_open(file); // inode, pos, deny_write(bool)
-    lock_release(&lock);
-    if (f == NULL)
-    {
-        return -1;
-    }
-    // fd 생성해 fd-table에 file구조체내용이랑 같이 저장해두기 -> 해당 fd 반환(int형)
-    // fd_table 할당하는걸 못함
-    int new_fd = create_fd(f);
-    return new_fd; // 실패하면 -1
-}
-
 static int sys_read(int fd, void *buffer, unsigned length)
 {
     if (!is_valid_addr(buffer))
@@ -331,30 +277,27 @@ bool is_valid_addr(const void *u_add)
 
     /* 추가해야할 검사요소: 넘겨준 버퍼가 페이지 경계에 걸쳐있을때->끝부분도 유효페이지에 존재하는지 */
 }
-// open() -> fd 생성 관련 ========================
-static int create_fd(struct file *f) // 현재 프로세스의 fd_table 중 빈 fd찾아 file구조체 넣고 fd 리턴
+
+// helper 함수들 =====
+void check_valid_addr(void *addr)
 {
-    struct thread *current_t = thread_current();
-    struct file **ft = current_t->fd_table;
-    for (int i = 2; i < FD_MAX; i++)
+    if (addr == NULL || !is_user_vaddr(addr) || pml4_get_page(thread_current()->pml4, addr) == NULL)
     {
-        if (ft[i] == NULL)
+        sys_exit(-1);
+    }
+}
+static int create_fd(struct file *f)
+{
+    local_fdt = thread_current()->file_descriptor_table;
+
+    for (int i = FD_MIN; i < FD_MAX; i++)
+    {
+        if (local_fdt[i] == NULL)
         {
-            ft[i] = f;
+            local_fdt[i] = f;
             return i;
         }
     }
+    file_close(f);
     return -1;
-} // struct file **fd_table;
-
-static struct file *get_file_from_fd(int fd)
-{
-    if (fd < FD_MIN || fd > FD_MAX)
-    {
-        return NULL;
-    }
-    struct thread *cur_thread = thread_current();
-    struct file **fdt = cur_thread->fd_table;
-
-    return fdt[fd];
 }
