@@ -87,13 +87,6 @@ typedef int tid_t;
  * ready state is on the run queue, whereas only a thread in the
  * blocked state is on a semaphore wait list. */
 
-// 프로세스(=스레드)마다 선언할 fd-table 구조체 ========
-#define FD_MIN 2
-#define FD_MAX 128
-// struct fd_table {
-//     // struct file *files[FD_MAX]; // 인덱스를 fd로 쓰면 안되나?(0,1 빼고) O
-//     struct file **filePtr;
-// };
 // =============================================
 struct thread {
     /* Owned by thread.c. */
