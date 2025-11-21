@@ -51,13 +51,6 @@ void syscall_init(void)
     write_msr(MSR_SYSCALL_MASK, FLAG_IF | FLAG_TF | FLAG_DF | FLAG_IOPL | FLAG_AC | FLAG_NT);
 }
 
-void check_valid_fd(int fd)
-{
-    if (fd < 0 || fd >= 128 || fd == 1)
-    {
-        sys_exit(-1);
-    }
-}
 void check(void *addr)
 {
     if (addr == NULL || !is_user_vaddr(addr) || pml4_get_page(thread_current()->pml4, addr) == NULL)
@@ -156,8 +149,10 @@ static void sys_exit(int status)
 static int sys_write(int fd, const void *buffer, unsigned length)
 {
     check_start_to_end(buffer, length);
-    check_valid_fd(fd);
-
+    if (fd < 0 || fd >= 128)
+    {
+        sys_exit(-1);
+    }
     if (fd == 1)
     {
         const char *ptr = (const char *)buffer;
@@ -232,9 +227,9 @@ static int sys_open(const char *file)
 
 static void sys_close(int fd)
 {
-    check_valid_fd(fd);
     local_fdt = thread_current()->file_descriptor_table;
-    if (local_fdt[fd] == NULL)
+
+    if (fd < 2 || fd >= 128 || local_fdt[fd] == NULL)
     {
         sys_exit(-1);
     }
@@ -245,7 +240,11 @@ static void sys_close(int fd)
 static int sys_read(int fd, void *buffer, unsigned length)
 {
     check_start_to_end(buffer, length);
-    check_valid_fd(fd);
+
+    if (fd < 0 || fd >= 128 || fd == 1)
+    {
+        sys_exit(-1);
+    }
 
     if (fd == 0)
     {
