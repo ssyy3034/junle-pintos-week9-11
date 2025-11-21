@@ -5,6 +5,7 @@
 #include <list.h>
 #include <stdint.h>
 #include "threads/interrupt.h"
+#include "filesys/file.h"
 #ifdef VM
 #include "vm/vm.h"
 #endif
@@ -20,7 +21,7 @@ enum thread_status {
 /* Thread identifier type.
    You can redefine this to whatever type you like. */
 typedef int tid_t;
-#define TID_ERROR ((tid_t)-1) /* Error value for tid_t. */
+#define TID_ERROR ((tid_t) - 1) /* Error value for tid_t. */
 
 /* Thread priorities. */
 #define PRI_MIN 0      /* Lowest priority. */
@@ -98,7 +99,8 @@ struct thread {
     int original_priority;
     struct lock *waiting_lock;
 
-    int exit_code; // exit()호출되면 남김
+    int exit_code;                       // exit()호출되면 남김
+    struct file **file_descriptor_table; // fd-table
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
