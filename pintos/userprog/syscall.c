@@ -19,12 +19,24 @@ void syscall_entry(void);
 void syscall_handler(struct intr_frame *);
 
 // syscall 함수들 ========
+<<<<<<< HEAD
+static void sys_halt(void);                                        // 완료
+static void sys_exit(int status);                                  // 완료
+static bool sys_create(const char *file, unsigned initial_size);   // 완료
+static int sys_open(const char *file);                             // 완료
+static int sys_filesize(int fd);                                   // 완료
+static int sys_read(int fd, void *buffer, unsigned size);          // 완료
+static int sys_write(int fd, const void *buffer, unsigned length); // 완료
+static void close(int fd);
+
+=======
 static void sys_halt(void);                                      // 완료
 static void sys_exit(int status);                                // 완료
 static bool sys_create(const char *file, unsigned initial_size); // 완료
 static int sys_open(const char *file);                           // 완료
 static int sys_read(int fd, void *buffer, unsigned length);
 static int sys_write(int fd, const void *buffer, unsigned length); // 완료
+>>>>>>> origin/main
 // helper 함수들 ========
 void check_valid_addr(void *addr);
 static int create_fd(struct file *f);
@@ -93,6 +105,21 @@ void syscall_handler(struct intr_frame *f UNUSED)
 
             f->R.rax = sys_open(file);
             break;
+<<<<<<< HEAD
+        case SYS_FILESIZE:
+            /*
+                fd로 열린 파일의 크기를 바이트 단위로 반환
+                input : fd
+                return : byte
+            */
+            fd = f->R.rdi;
+            f->R.rax = sys_filesize(fd);
+            break;
+        case SYS_READ:
+            fd = f->R.rdi;
+            buffer = f->R.rsi;
+            initial_size = f->R.rdx;
+=======
         case SYS_READ:
             fd = f->R.rdi;
             buffer = f->R.rsi;
@@ -100,13 +127,22 @@ void syscall_handler(struct intr_frame *f UNUSED)
 
             f->R.rax = sys_read(fd, buffer, length);
             break;
+>>>>>>> origin/main
 
+            f->R.rax = sys_read(fd, buffer, initial_size);
+            break;
         case SYS_WRITE:
             fd = f->R.rdi;
             buffer = f->R.rsi;
             length = f->R.rdx;
 
             f->R.rax = sys_write(fd, buffer, length);
+            break;
+
+        case SYS_CLOSE:
+            fd = f->R.rdi;
+
+            close(fd);
             break;
 
         default:
@@ -165,6 +201,61 @@ static int sys_open(const char *file)
     return fd;
 }
 
+<<<<<<< HEAD
+/*
+    fd 로 파일 찾아서 그 파일의 크기 리턴
+    file_length(file) 사용
+*/
+int sys_filesize(int fd)
+{
+    local_fdt = thread_current()->file_descriptor_table;
+
+    lock_acquire(&file_lock);
+    int result = file_length(local_fdt[fd]);
+    lock_release(&file_lock);
+
+    return result;
+}
+
+/*
+    - fd로 열린 파일을 size 바이트를 읽어 buffer에 저장
+    - fd가 0일 경우 키보드 입력. 이때는 input_getc()를 통해 읽음
+*/
+int sys_read(int fd, void *buffer, unsigned size)
+{
+    check_valid_addr(buffer);
+    check_valid_addr((char *)buffer - size);
+
+    local_fdt = thread_current()->file_descriptor_table;
+
+    char *buf = buffer;
+    int result = 0;
+    if (fd == 0)
+    {
+        for (int i = 0; i < size; i++)
+        {
+            buf[i] = input_getc();
+        }
+        result = size;
+    } else if (fd == 1)
+    {
+        return -1;
+    } else if (fd >= 2 && fd <= (sizeof(local_fdt) / sizeof(local_fdt[0])) + FD_MIN)
+    {
+        struct file *file = local_fdt[fd];
+        if (file == NULL)
+        {
+            result = -1;
+        } else
+        {
+            result = file_read(file, buffer, size);
+        }
+    } else
+    {
+        result = -1;
+    }
+    return result;
+=======
 static int sys_read(int fd, void *buffer, unsigned length)
 {
     check_valid_addr(buffer);
@@ -196,6 +287,7 @@ static int sys_read(int fd, void *buffer, unsigned length)
         off_t read_bytes = file_read(f, buffer, (int)length); // 읽은 바이트수 반환
         return (int)read_bytes;
     }
+>>>>>>> origin/main
 }
 
 static int sys_write(int fd, const void *buffer, unsigned length)
