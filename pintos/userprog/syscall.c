@@ -26,7 +26,8 @@ static int sys_open(const char *file);                             // 완료
 static int sys_read(int fd, void *buffer, unsigned length);        // 완료
 static int sys_write(int fd, const void *buffer, unsigned length); // 완료
 static int filesize(int fd);                                       // 완료
-static void sys_close(int fd);
+static void sys_close(int fd);                                     // 완료
+static int exec(const char *file);
 // helper 함수들 ========
 void check_valid_addr(void *addr);
 static int create_fd(struct file *f);
@@ -83,6 +84,12 @@ void syscall_handler(struct intr_frame *if_ UNUSED)
             sys_exit(status);
             break;
 
+        case SYS_EXEC:
+            file = if_->R.rdi;
+
+            sys_exec();
+            break;
+
         case SYS_CREATE:
             file = if_->R.rdi;
             initial_size = if_->R.rsi;
@@ -117,6 +124,12 @@ void syscall_handler(struct intr_frame *if_ UNUSED)
             sys_close(fd);
             break;
 
+        case SYS_FILESIZE:
+            fd = if_->R.rdi;
+
+            if_->R.rax = filesize(fd);
+            break;
+
         default:
             sys_exit(-1);
             break;
@@ -124,7 +137,7 @@ void syscall_handler(struct intr_frame *if_ UNUSED)
 
     // thread_exit(); ->시스템콜 끝날때마다 무조건 현재 스레드(=프로세스) 종료
 }
-// 시스템콜 함수들 ========================
+// 시스템콜 함수들 =======================================
 static void sys_halt(void)
 {
     power_off();
@@ -137,6 +150,14 @@ static void sys_exit(int status)
     thread_exit();
 }
 
+// exec(): 현재 프로세스를 cmd_line에 주어진 이름을 가진 실행 파일로 변경 → 주어진 모든 인수를 전달한다.
+static int exec(const char *file)
+{
+
+    return 1;
+}
+
+// create(): 디스크에 파일의 inode(메타데이터)와 데이터 블록 공간을 영구적으로 할당한다.
 static bool sys_create(const char *file, unsigned initial_size)
 {
     check_valid_addr(file);
@@ -155,10 +176,8 @@ static int sys_open(const char *file)
 {
     check_valid_addr(file);
 
-    if (*file == '\0' || file == NULL)
-    {
+    if (*file == '\0')
         return -1;
-    }
 
     lock_acquire(&file_lock);
     struct file *open_file = filesys_open(file);
@@ -173,6 +192,7 @@ static int sys_open(const char *file)
     return fd;
 }
 
+// read(): 열려 있는 파일(fd) 에서 size 바이트만큼 데이터를 읽어서 buffer에 넣는다.
 static int sys_read(int fd, void *buffer, unsigned length)
 {
     check_valid_addr(buffer);
@@ -190,7 +210,7 @@ static int sys_read(int fd, void *buffer, unsigned length)
         }
         return length;
 
-    } else if (fd == 1)
+    } else if (fd == 1) // 쓰기 전용
     {
         return -1;
     } else
@@ -202,16 +222,19 @@ static int sys_read(int fd, void *buffer, unsigned length)
             return -1;
         }
         // 2) length만큼 읽기 (file --> buffer)
+        lock_acquire(&file_lock);
         off_t read_bytes = file_read(f, buffer, (int)length); // 읽은 바이트수 반환
+        lock_release(&file_lock);
         return (int)read_bytes;
     }
 }
 
+// write(): 열려 있는 파일(fd) 에 대해 buffer로부터 size 바이트만큼 데이터를 쓴다.
 static int sys_write(int fd, const void *buffer, unsigned length)
 {
     check_valid_addr(buffer);
 
-    if (fd == 0 || fd == NULL)
+    if (fd == 0) // 읽기 전용
     {
         return -1;
     } else if (fd == 1)
@@ -226,13 +249,15 @@ static int sys_write(int fd, const void *buffer, unsigned length)
         {
             return -1;
         }
+        lock_acquire(&file_lock);
         off_t len = file_write(f, buffer, length); // file_write(): 쓰인 바이트수만 반환
+        lock_release(&file_lock);
         return len;
     }
     // 추가사항: 권한 확인(쓰기가능파일인지), 콘솔 출력시, size>=1000Byte면 여러번 나눠서 출력하도록,
 }
 
-int filesize(int fd) // Returns the size, in bytes, of the file open as fd.
+static int filesize(int fd) // Returns the size, in bytes, of the file open as fd.
 {
     // off_t file_length(struct file *file)
     struct file *f = get_file_from_fd(fd);
@@ -260,10 +285,12 @@ static void sys_close(int fd)
     struct file *tmp_p = fdt[fd];
     fdt[fd] = NULL;
     // 3) file_close()로 마무리
+    lock_acquire(&file_lock);
     file_close(tmp_p);
+    lock_release(&file_lock);
 }
 
-// helper 함수들 =====
+// helper 함수들 =============================================
 void check_valid_addr(void *addr) // 유효한 주소인지 확인 후 처리
 {
     // 1) 주소값이 NULL은 아닌지 2)주소가 유저가상메모리영역인지 3)p_table에 존재하는지

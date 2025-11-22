@@ -6,7 +6,7 @@ open-twice PASS
 read-bad-ptr PASS
 create-long PASS
 create-bound PASS
-read-normal FAIL
+read-normal PASS
 open-empty PASS
 open-null PASS
 close-twice PASS
