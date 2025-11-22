@@ -19,8 +19,9 @@ void syscall_entry(void);
 void syscall_handler(struct intr_frame *);
 
 // syscall 함수들 ========
-static void sys_halt(void);                                      // 완료
-static void sys_exit(int status);                                // 완료
+static void sys_halt(void);       // 완료
+static void sys_exit(int status); // 완료
+static int wait(pid_t);
 static bool sys_create(const char *file, unsigned initial_size); // 완료
 static int sys_open(const char *file);                           // 완료
 static int sys_read(int fd, void *buffer, unsigned length);      // 완료

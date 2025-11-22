@@ -19,7 +19,8 @@
         "new": "c",
         "ostream": "c",
         "streambuf": "c",
-        "main.h": "c"
+        "main.h": "c",
+        "syscall.h": "c"
     },
 
     // ------------------------------------
