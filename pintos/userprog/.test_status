@@ -6,13 +6,15 @@ open-twice PASS
 read-bad-ptr PASS
 create-long PASS
 create-bound PASS
-read-normal FAIL
+read-normal PASS
 open-empty PASS
 open-null PASS
+close-twice PASS
 args-none FAIL
 create-bad-ptr PASS
 read-stdout PASS
 read-boundary PASS
+close-normal PASS
 halt PASS
 write-bad-fd PASS
 open-boundary PASS
@@ -20,6 +22,7 @@ create-null PASS
 open-bad-ptr PASS
 write-normal PASS
 write-boundary PASS
+close-bad-fd PASS
 exit PASS
 write-bad-ptr PASS
 args-many PASS

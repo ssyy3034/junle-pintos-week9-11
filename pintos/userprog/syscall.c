@@ -26,9 +26,10 @@ static void sys_halt(void);                                        // 완료
 static void sys_exit(int status);                                  // 완료
 static bool sys_create(const char *file, unsigned initial_size);   // 완료
 static int sys_open(const char *file);                             // 완료
+static int sys_filesize(int fd);                                   // 완료
 static int sys_read(int fd, void *buffer, unsigned length);        // 완료
 static int sys_write(int fd, const void *buffer, unsigned length); // 완료
-static int sys_filesize(int fd);                                   // 완료
+static void sys_close(int fd);                                     // 완료
 // helper 함수들 ========
 void check_valid_addr(void *addr);
 static int create_fd(struct file *f);
@@ -118,6 +119,12 @@ void syscall_handler(struct intr_frame *if_ UNUSED)
             length = if_->R.rdx;
 
             if_->R.rax = sys_write(fd, buffer, length);
+            break;
+
+        case SYS_CLOSE:
+            fd = if_->R.rdi;
+
+            sys_close(fd);
             break;
 
         default:
@@ -249,6 +256,22 @@ static int sys_write(int fd, const void *buffer, unsigned length)
         return len;
     }
     // 추가사항: 권한 확인(쓰기가능파일인지), 콘솔 출력시, size>=1000Byte면 여러번 나눠서 출력하도록,
+}
+
+static void sys_close(int fd)
+{
+    // 1) fd-table 불러오기
+    struct file **fdt = thread_current()->file_descriptor_table;
+    // 2) fd 검증
+    if (fd < 2 || fd >= 128 || fdt[fd] == NULL)
+    {
+        sys_exit(-1);
+    }
+    // 3) file_close() -> fd 비우기
+    lock_acquire(&file_lock);
+    file_close(fdt[fd]);
+    lock_release(&file_lock);
+    fdt[fd] = NULL;
 }
 
 // helper 함수들 =============================================
