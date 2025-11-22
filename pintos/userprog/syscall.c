@@ -1,4 +1,5 @@
 #include "userprog/syscall.h"
+#include "user/syscall.h"
 #include <stdio.h>
 #include <syscall-nr.h>
 #include "threads/interrupt.h"
@@ -30,7 +31,7 @@ static int sys_read(int fd, void *buffer, unsigned length);        // 완료
 static int sys_write(int fd, const void *buffer, unsigned length); // 완료
 static int filesize(int fd);                                       // 완료
 static void sys_close(int fd);                                     // 완료
-static int sys_exec(const char *file);
+static int sys_exec(const char *file);                             // 완료(임시 - fork테스트 제외)
 // helper 함수들 ========
 void check_valid_addr(void *addr);
 static int create_fd(struct file *f);
@@ -106,6 +107,12 @@ void syscall_handler(struct intr_frame *if_ UNUSED)
             if_->R.rax = sys_open(file);
             break;
 
+        case SYS_FILESIZE:
+            fd = if_->R.rdi;
+
+            if_->R.rax = filesize(fd);
+            break;
+
         case SYS_READ:
             fd = if_->R.rdi;
             buffer = if_->R.rsi;
@@ -126,12 +133,6 @@ void syscall_handler(struct intr_frame *if_ UNUSED)
             fd = if_->R.rdi;
 
             sys_close(fd);
-            break;
-
-        case SYS_FILESIZE:
-            fd = if_->R.rdi;
-
-            if_->R.rax = filesize(fd);
             break;
 
         default:
