@@ -44,6 +44,11 @@ tid_t process_create_initd(const char *file_name)
 {
     char *fn_copy;
     tid_t tid;
+    char *tmp;
+    char *file_name_r = palloc_get_page(0);
+
+    strlcpy(file_name_r, file_name, PGSIZE);
+    file_name_r = strtok_r(file_name_r, " ", &tmp);
 
     /* Make a copy of FILE_NAME.
      * Otherwise there's a race between the caller and load(). */
@@ -53,9 +58,10 @@ tid_t process_create_initd(const char *file_name)
     strlcpy(fn_copy, file_name, PGSIZE);
 
     /* Create a new thread to execute FILE_NAME. */
-    tid = thread_create(file_name, PRI_DEFAULT, initd, fn_copy);
+    tid = thread_create(file_name_r, PRI_DEFAULT, initd, fn_copy);
     if (tid == TID_ERROR)
         palloc_free_page(fn_copy);
+    palloc_free_page(file_name_r);
     return tid;
 }
 
@@ -165,6 +171,9 @@ error:
 int process_exec(void *f_name)
 {
     char *file_name = f_name;
+    // char *file_name = palloc_get_page(PAL_ZERO);
+    // strlcpy(file_name, f_name, PGSIZE);
+
     bool success;
 
     /* We cannot use the intr_frame in the thread structure.
@@ -184,7 +193,9 @@ int process_exec(void *f_name)
     /* If load failed, quit. */
     palloc_free_page(file_name);
     if (!success)
-        return -1;
+    {
+        thread_exit();
+    }
 
     /* Start switched process. */
     do_iret(&_if);
@@ -202,7 +213,7 @@ int process_exec(void *f_name)
  * does nothing. */
 int process_wait(tid_t child_tid UNUSED)
 {
-    int w = 20000;
+    int w = 200000;
     while (w > 0)
     {
         w--;
@@ -357,6 +368,7 @@ static bool load(const char *file_name, struct intr_frame *if_)
     // 파일명 없는 경우 방어
     if (file_name == NULL)
     {
+        success = false;
         printf("load: no file name\n");
         goto done;
     }
@@ -365,6 +377,7 @@ static bool load(const char *file_name, struct intr_frame *if_)
     file = filesys_open(file_name);
     if (file == NULL)
     {
+        success = false;
         printf("load: %s: open failed\n", file_name);
         goto done;
     }

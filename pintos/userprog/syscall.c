@@ -11,6 +11,8 @@
 #include "filesys/file.h"
 #include "filesys/filesys.h"
 #include "threads/synch.h"
+#include "userprog/process.h"
+#include "threads/palloc.h"
 
 #define FD_MIN 2
 #define FD_MAX 128
@@ -25,6 +27,11 @@ static bool sys_create(const char *file, unsigned initial_size); // 완료
 static int sys_open(const char *file);                           // 완료
 static int sys_read(int fd, void *buffer, unsigned length);
 static int sys_write(int fd, const void *buffer, unsigned length); // 완료
+static int sys_filesize(int fd);                                   // 완료
+static tid_t sys_process_fork(const char *name, struct intr_frame *if_);
+static void sys_close(int fd); // 완료
+static int sys_exec(const char *file);
+
 // helper 함수들 ========
 void check_valid_addr(void *addr);
 static int create_fd(struct file *f);
@@ -93,6 +100,7 @@ void syscall_handler(struct intr_frame *if_ UNUSED)
 
             if_->R.rax = sys_open(file);
             break;
+
         case SYS_READ:
             fd = if_->R.rdi;
             buffer = if_->R.rsi;
@@ -107,6 +115,12 @@ void syscall_handler(struct intr_frame *if_ UNUSED)
             length = if_->R.rdx;
 
             if_->R.rax = sys_write(fd, buffer, length);
+            break;
+
+        case SYS_EXEC:
+            file = if_->R.rdi;
+
+            if_->R.rax = sys_exec(file);
             break;
 
         case SYS_CLOSE:
@@ -247,6 +261,25 @@ static void sys_close(int fd)
     file_close(local_fdt[fd]);
     local_fdt[fd] = NULL;
 }
+static int sys_exec(const char *file)
+{
+    check_valid_addr(file);
+    if (file == NULL || file == '\0')
+    {
+        return -1;
+    }
+    char *file_name = palloc_get_page(PAL_ZERO);
+    strlcpy(file_name, file, PGSIZE);
+
+    if (process_exec(file_name) == -1)
+    {
+        // 실패했다면 할당했던 페이지 해제 (메모리 누수 방지)
+        // (단, 성공 시에는 process_exec 내부나 종료 과정에서 해제 책임을 넘김)
+        // *구현에 따라 process_exec이 실패해도 내부에서 free하는 경우가 있으니 확인 필요*
+        return -1;
+    }
+    return 0;
+}
 
 // helper 함수들 =====
 void check_valid_addr(void *addr) // 유효한 주소인지 확인 후 처리
@@ -283,7 +316,7 @@ static struct file *get_file_from_fd(int fd) // fd로부터 파일 받기(유효
 {
     struct file **local_fdt = thread_current()->file_descriptor_table;
 
-    if (fd < FD_MIN || fd > FD_MAX || local_fdt[fd] == NULL)
+    if (fd < FD_MIN || fd >= FD_MAX || local_fdt[fd] == NULL)
     {
         return NULL;
     }
