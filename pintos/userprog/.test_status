@@ -4,8 +4,8 @@ read-bad-fd PASS
 args-multiple PASS
 create-normal PASS
 open-twice PASS
+exec-arg PASS
 exec-missing FAIL
-exec-arg FAIL
 read-bad-ptr PASS
 create-long PASS
 create-bound PASS
@@ -30,7 +30,7 @@ write-boundary PASS
 close-bad-fd PASS
 exit PASS
 write-bad-ptr PASS
-exec-once FAIL
+exec-once PASS
 args-many PASS
 write-zero PASS
 create-exists PASS

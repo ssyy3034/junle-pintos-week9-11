@@ -184,7 +184,7 @@ int process_exec(void *f_name)
     /* If load failed, quit. */
     palloc_free_page(file_name);
     if (!success)
-        return -1;
+        return -1; // 리턴할 주소가 사라졌다 (clean_up) -> 조치 필요
 
     /* Start switched process. */
     do_iret(&_if); // 실제로 cpu레지에 _if내용 씌우고 유저모드로 점프

@@ -19,7 +19,25 @@
 		"iosfwd": "c",
 		"new": "c",
 		"ostream": "c",
-		"streambuf": "c"
+		"streambuf": "c",
+		"process.h": "c",
+		"array": "c",
+		"concepts": "c",
+		"cstddef": "c",
+		"cstdio": "c",
+		"cwchar": "c",
+		"deque": "c",
+		"list": "c",
+		"vector": "c",
+		"memory": "c",
+		"tuple": "c",
+		"type_traits": "c",
+		"initializer_list": "c",
+		"stdexcept": "c",
+		"string": "c",
+		"system_error": "c",
+		"typeinfo": "c",
+		"utility": "c"
 	},
 
     // ------------------------------------

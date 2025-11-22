@@ -12,6 +12,8 @@
 #include "filesys/filesys.h"
 #include "threads/synch.h"
 #include "userprog/process.h"
+#include "threads/palloc.h"
+#include "include/lib/string.h"
 
 #define FD_MIN 2
 #define FD_MAX 128
@@ -156,7 +158,17 @@ static void sys_exit(int status)
 static int sys_exec(const char *file)
 {
     check_valid_addr(file);
-    return process_exec(file);
+
+    // 1) 커널영역에 문자열 담을 공간 할당받기
+    char *file_save = palloc_get_page(PAL_ZERO);
+    if (file_save == NULL)
+    {
+        return -1;
+    }
+    // 2) 문자열 내용 복사해서 해당 공간에 데이터 넣기
+    size_t siz = strlcpy(file_save, file, PGSIZE); // sizeof(*file)
+    // 3) 그 시작주소를 process_exec()에 넘기기
+    return process_exec(file_save);
 }
 
 // create(): 디스크에 파일의 inode(메타데이터)와 데이터 블록 공간을 영구적으로 할당한다.
