@@ -30,6 +30,7 @@ static void sys_close(int fd);
 void check_valid_addr(void *addr);
 static int create_fd(struct file *f);
 static struct file *get_file_from_fd(int fd);
+static void remove_fd(int fd);
 
 static struct lock file_lock;
 /* System call.
@@ -93,6 +94,15 @@ void syscall_handler(struct intr_frame *if_ UNUSED)
             file = if_->R.rdi;
 
             if_->R.rax = sys_open(file);
+            break;
+        case SYS_FILESIZE:
+            /*
+                fd로 열린 파일의 크기를 바이트 단위로 반환
+                input : fd
+                return : byte
+            */
+            fd = if_->R.rdi;
+            if_->R.rax = filesize(fd);
             break;
         case SYS_READ:
             fd = if_->R.rdi;
@@ -171,6 +181,19 @@ static int sys_open(const char *file)
     return fd;
 }
 
+int filesize(int fd)
+{
+    /*
+        fd 로 파일 찾아서 그 파일의 크기 리턴
+        file_length(file) 사용
+    */
+    lock_acquire(&file_lock);
+    int result = file_length(get_file_from_fd(fd));
+    lock_release(&file_lock);
+
+    return result;
+}
+
 static int sys_read(int fd, void *buffer, unsigned length)
 {
     check_valid_addr(buffer);
@@ -207,6 +230,7 @@ static int sys_read(int fd, void *buffer, unsigned length)
 static int sys_write(int fd, const void *buffer, unsigned length)
 {
     check_valid_addr(buffer);
+    check_valid_addr(buffer + length - 1);
 
     if (fd == 0 || fd == NULL)
     {
@@ -215,15 +239,31 @@ static int sys_write(int fd, const void *buffer, unsigned length)
     {
         putbuf((const char *)buffer, (size_t)length);
         return length;
+    } else
+    {
+        struct file *write_file = get_file_from_fd(fd);
+        if (write_file != NULL)
+        {
+            // file_write(struct file *file, const void *buffer, off_t size)
+            return file_write(write_file, buffer, length);
+        } else
+        {
+            return -1;
+        }
     }
 }
+
 /* fd로 들어온 파일 디스크립터를 닫는다 */
 static void sys_close(int fd)
 {
-    struct file *target_file = get_file_from_fd(fd);
-    if (target_file != NULL)
+    struct file *close_file = get_file_from_fd(fd);
+    if (close_file != NULL)
     {
-        file_close(target_file);
+        file_close(close_file);
+        remove_fd(fd);
+    } else
+    {
+        sys_exit(-1);
     }
 }
 
@@ -253,11 +293,17 @@ static int create_fd(struct file *f) // 해당 파일용 fd를 만들어 fd_tabl
     return -1;
 }
 
+static void remove_fd(int fd)
+{
+    struct file **local_fdt = thread_current()->file_descriptor_table;
+    local_fdt[fd] = NULL;
+}
+
 static struct file *get_file_from_fd(int fd) // fd로부터 파일 받기(유효검사도같이)
 {
     struct file **local_fdt = thread_current()->file_descriptor_table;
 
-    if (fd < FD_MIN || fd > FD_MAX || local_fdt[fd] == NULL)
+    if (fd < FD_MIN || fd >= FD_MAX || local_fdt[fd] == NULL)
     {
         return NULL;
     }
