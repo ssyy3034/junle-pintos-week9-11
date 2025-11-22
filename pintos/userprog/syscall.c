@@ -208,8 +208,18 @@ static int sys_write(int fd, const void *buffer, unsigned length)
     } else if (fd == 1)
     {
         putbuf((const char *)buffer, (size_t)length);
-        return length; // 수백바이트 이상이면 한번의 putbuf호출로 전체 버퍼 출력해야하는데
-                       //  그거 구현 어떻게해야할지
+        return length;
+    } else
+    {
+        struct file *write_file = get_file_from_fd(fd);
+        if (write_file == NULL)
+        {
+            return -1;
+        }
+        lock_acquire(&file_lock);
+        off_t len = file_write(write_file, buffer, length); // file_write(): 쓰인 바이트수만 반환
+        lock_release(&file_lock);
+        return len;
     }
     // 추가사항: 권한 확인(쓰기가능파일인지), 콘솔 출력시, size>=1000Byte면 여러번 나눠서 출력하도록,
 }
