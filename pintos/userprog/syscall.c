@@ -117,12 +117,6 @@ void syscall_handler(struct intr_frame *if_ UNUSED)
             if_->R.rax = sys_write(fd, buffer, length);
             break;
 
-        case SYS_EXEC:
-            file = if_->R.rdi;
-
-            if_->R.rax = sys_exec(file);
-            break;
-
         case SYS_CLOSE:
             fd = if_->R.rdi;
             sys_close(fd);
@@ -260,25 +254,6 @@ static void sys_close(int fd)
     }
     file_close(local_fdt[fd]);
     local_fdt[fd] = NULL;
-}
-static int sys_exec(const char *file)
-{
-    check_valid_addr(file);
-    if (file == NULL || file == '\0')
-    {
-        return -1;
-    }
-    char *file_name = palloc_get_page(PAL_ZERO);
-    strlcpy(file_name, file, PGSIZE);
-
-    if (process_exec(file_name) == -1)
-    {
-        // 실패했다면 할당했던 페이지 해제 (메모리 누수 방지)
-        // (단, 성공 시에는 process_exec 내부나 종료 과정에서 해제 책임을 넘김)
-        // *구현에 따라 process_exec이 실패해도 내부에서 free하는 경우가 있으니 확인 필요*
-        return -1;
-    }
-    return 0;
 }
 
 // helper 함수들 =====
