@@ -171,8 +171,8 @@ int process_exec(void *f_name)
      * This is because when current thread rescheduled,
      * it stores the execution information to the member. */
     struct intr_frame _if;
-    _if.ds = _if.es = _if.ss = SEL_UDSEG;
-    _if.cs = SEL_UCSEG;
+    _if.ds = _if.es = _if.ss = SEL_UDSEG; // 유저 모드가 사용할 데이터 영역 설정
+    _if.cs = SEL_UCSEG;                   // cpu가 유저모드 코드로 실행하도록 세그먼트 선택
     _if.eflags = FLAG_IF | FLAG_MBS;
 
     /* We first kill the current context */
@@ -187,7 +187,7 @@ int process_exec(void *f_name)
         return -1;
 
     /* Start switched process. */
-    do_iret(&_if);
+    do_iret(&_if); // 실제로 cpu레지에 _if내용 씌우고 유저모드로 점프
     NOT_REACHED();
 }
 

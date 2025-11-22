@@ -11,6 +11,7 @@
 #include "filesys/file.h"
 #include "filesys/filesys.h"
 #include "threads/synch.h"
+#include "userprog/process.h"
 
 #define FD_MIN 2
 #define FD_MAX 128
@@ -27,7 +28,7 @@ static int sys_read(int fd, void *buffer, unsigned length);        // 완료
 static int sys_write(int fd, const void *buffer, unsigned length); // 완료
 static int filesize(int fd);                                       // 완료
 static void sys_close(int fd);                                     // 완료
-static int exec(const char *file);
+static int sys_exec(const char *file);
 // helper 함수들 ========
 void check_valid_addr(void *addr);
 static int create_fd(struct file *f);
@@ -87,7 +88,7 @@ void syscall_handler(struct intr_frame *if_ UNUSED)
         case SYS_EXEC:
             file = if_->R.rdi;
 
-            sys_exec();
+            if_->R.rax = sys_exec(file);
             break;
 
         case SYS_CREATE:
@@ -102,6 +103,7 @@ void syscall_handler(struct intr_frame *if_ UNUSED)
 
             if_->R.rax = sys_open(file);
             break;
+
         case SYS_READ:
             fd = if_->R.rdi;
             buffer = if_->R.rsi;
@@ -151,10 +153,10 @@ static void sys_exit(int status)
 }
 
 // exec(): 현재 프로세스를 cmd_line에 주어진 이름을 가진 실행 파일로 변경 → 주어진 모든 인수를 전달한다.
-static int exec(const char *file)
+static int sys_exec(const char *file)
 {
-
-    return 1;
+    check_valid_addr(file);
+    return process_exec(file);
 }
 
 // create(): 디스크에 파일의 inode(메타데이터)와 데이터 블록 공간을 영구적으로 할당한다.

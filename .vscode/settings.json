@@ -13,7 +13,13 @@
 		"file.h": "c",
 		"synch.h": "c",
 		"*.inc": "c",
-		"atomic": "c"
+		"atomic": "c",
+		"exception": "c",
+		"memory_resource": "c",
+		"iosfwd": "c",
+		"new": "c",
+		"ostream": "c",
+		"streambuf": "c"
 	},
 
     // ------------------------------------
